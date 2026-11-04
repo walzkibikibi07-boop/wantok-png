@@ -116,6 +116,12 @@
     return true;
   }
   $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    message('Signing in...');
+    try {
+      const { data, error } = await db.auth.signInWithPassword({ email: $('#email').value.trim(), password: $('#password').value });
       if (error) throw error;
       const ok = await enter(data.user);
       if (ok) $('#password').value = '';
