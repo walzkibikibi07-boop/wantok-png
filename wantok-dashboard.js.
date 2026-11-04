@@ -1,0 +1,99 @@
+/* WANTOK PNG Admin Dashboard — live Supabase edition */
+(function () {
+  'use strict';
+
+  const SUPABASE_URL = 'https://rpcekiqhvsmzjmjimnsj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_bmR_OLpVkON13vH-uTCkRg_GGH8jllW';
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = s => document.querySelector(s);
+
+  const tables = {
+    overview: { label: 'Overview' },
+    profiles: {
+      label: 'Members / Profiles',
+      table: 'profiles',
+      fields: ['id', 'full_name', 'email', 'phone', 'province', 'district', 'created_at']
+    },
+    registrations: {
+      label: 'Registrations',
+      table: 'registrations',
+      fields: ['id', 'full_name', 'business_name', 'category', 'location', 'phone', 'email', 'created_at']
+    },
+    businesses: {
+      label: 'Businesses',
+      table: 'businesses',
+      fields: ['id', 'name', 'category', 'location', 'province', 'town', 'phone', 'email', 'status', 'created_at'],
+      status: true
+    },
+    jobs: {
+      label: 'Jobs',
+      table: 'jobs',
+      fields: ['id', 'title', 'employer', 'location', 'province', 'town', 'job_type', 'status', 'created_at'],
+      status: true
+    },
+    posts: {
+      label: 'Community Posts',
+      table: 'posts',
+      fields: ['id', 'author_name', 'title', 'body', 'kind', 'province', 'media_type', 'media_url', 'status', 'created_at'],
+      status: true
+    },
+    reports: {
+      label: 'Government Connect Reports',
+      table: 'reports',
+      fields: ['id', 'ref', 'category', 'location', 'description', 'status', 'created_at'],
+      status: true
+    },
+    feedback: {
+      label: 'Feedback',
+      table: 'feedback',
+      fields: ['id', 'topic', 'province', 'name', 'contact', 'message', 'created_at']
+    },
+    notices: {
+      label: 'Government Notices',
+      table: 'notices',
+      fields: ['id', 'title', 'body', 'is_published', 'created_at'],
+      published: true
+    },
+    gov_services: {
+      label: 'Government Services',
+      table: 'gov_services',
+      fields: ['id', 'name', 'category', 'description', 'url', 'sort', 'created_at']
+    }
+  };
+
+  let current = 'overview';
+  let cache = {};
+
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+
+  const fmt = v =>
+    v == null || v === ''
+      ? '—'
+      : typeof v === 'object'
+        ? JSON.stringify(v)
+        : String(v);
+
+  function toast(m) {
+    const e = $('#toast');
+    e.textContent = m;
+    e.classList.add('show');
+    setTimeout(() => e.classList.remove('show'), 2600);
+  }
+
+  function message(m, bad = false) {
+    $('#login-status').textContent = m;
+    $('#login-status').className = bad ? 'error' : 'message';
+  }
+
+  async function verifyAdmin(user) {
+    const { data, error } = await db
+      .from('user_roles')
+      .select('role')
+      .eq('user
