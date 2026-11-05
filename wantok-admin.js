@@ -20,17 +20,27 @@
   const tables = {
     overview: { label: 'Overview' },
     reports: { label: 'Government Connect Reports', table: 'reports', status: ['Received', 'In Progress', 'Resolved', 'Rejected'], del: true,
-      fields: ['ref', 'category', 'location', 'description', 'status', 'created_at'] },
+      fields: ['ref', 'category', 'location', 'description', 'reporter_name', 'photo_url', 'status', 'created_at'] },
     businesses: { label: 'Businesses', table: 'businesses', status: STATUS3, del: true,
       fields: ['name', 'category', 'location', 'province', 'town', 'phone', 'email', 'status', 'created_at'] },
     jobs: { label: 'Jobs', table: 'jobs', status: STATUS3, del: true,
-      fields: ['title', 'employer', 'location', 'province', 'town', 'job_type', 'status', 'created_at'] },
+      fields: ['title', 'employer', 'pay', 'location', 'province', 'town', 'job_type', 'status', 'created_at'] },
     posts: { label: 'Community Posts', table: 'posts', status: STATUS3, del: true,
-      fields: ['author_name', 'title', 'body', 'kind', 'province', 'media_type', 'media_url', 'status', 'created_at'] },
+      fields: ['author_name', 'title', 'body', 'scope', 'province', 'media_type', 'media_url', 'status', 'created_at'] },
     notices: { label: 'Government Notices', table: 'notices', published: true, del: true, form: 'notice',
       fields: ['title', 'body', 'is_published', 'created_at'] },
     gov_services: { label: 'Government Services', table: 'gov_services', del: true, form: 'service',
       fields: ['name', 'category', 'description', 'url', 'sort', 'created_at'] },
+    listings: { label: 'Market Listings', table: 'listings', status: STATUS3, del: true,
+      fields: ['title', 'price', 'category', 'seller_name', 'province', 'photo_url', 'status', 'created_at'] },
+    job_applications: { label: 'Job Applications', table: 'job_applications', del: true,
+      fields: ['job_id', 'applicant_name', 'contact', 'message', 'created_at'] },
+    talents: { label: 'Talent Showcase', table: 'talents', status: STATUS3, del: true,
+      fields: ['title', 'owner_name', 'category', 'description', 'status', 'created_at'] },
+    stories: { label: 'Stories (24h)', table: 'stories', del: true,
+      fields: ['author_name', 'body', 'created_at'] },
+    circles: { label: 'Wantok Circles', table: 'circles', del: true, form: 'circle',
+      fields: ['name', 'emoji', 'description', 'province', 'created_at'] },
     profiles: { label: 'Members / Profiles', table: 'profiles',
       fields: ['full_name', 'email', 'phone', 'province', 'district', 'created_at'] },
     registrations: { label: 'Registrations', table: 'registrations', del: true,
@@ -79,7 +89,7 @@
   function cell(field, v) {
     if (v == null || v === '') return '<td>-</td>';
     if (field === 'created_at') return '<td>' + esc(fmtDate(v)) + '</td>';
-    if (field === 'media_url' || field === 'url') {
+    if (field === 'media_url' || field === 'url' || field === 'photo_url') {
       const u = String(v);
       return /^https?:\/\//i.test(u) ? '<td class="wide"><a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">Open link</a></td>' : '<td class="wide">' + esc(u) + '</td>';
     }
@@ -164,15 +174,15 @@
     c.innerHTML = '<div class="card"><p>Loading...</p></div>';
     const open = q => q.not('status', 'in', '(Resolved,Rejected)');
     const pend = q => q.eq('status', 'pending');
-    const [profiles, registrations, businesses, jobs, posts, reports, openReports, notices, feedback, pb, pj] = await Promise.all([
+    const [profiles, registrations, businesses, jobs, posts, reports, openReports, notices, feedback, pb, pj, listings] = await Promise.all([
       count('profiles'), count('registrations'), count('businesses'), count('jobs'), count('posts'), count('reports'),
-      count('reports', open), count('notices'), count('feedback'), count('businesses', pend), count('jobs', pend)
+      count('reports', open), count('notices'), count('feedback'), count('businesses', pend), count('jobs', pend), count('listings')
     ]);
     const k = (label, n, color) => '<div class="kpi"' + (color ? ' style="--c:' + color + '"' : '') + '><small>' + label + '</small><b>' + (n == null ? '?' : n) + '</b></div>';
     const act = (label, n, view) => '<tr><td>' + label + '</td><td><b>' + (n == null ? '?' : n) + '</b></td><td><button class="btn sm" data-view="' + view + '">Review</button></td></tr>';
     c.innerHTML =
       '<div class="kpis">' + k('Members', profiles, '#1565c0') + k('Registrations', registrations, '#1f9d4a') + k('Businesses', businesses, '#d62828') +
-      k('Jobs', jobs, '#f5b800') + k('Posts', posts, '#1f9d4a') + k('Reports', reports, '#b14bc4') + k('Notices', notices, '#0f4c81') + k('Feedback', feedback, '#6b7686') + '</div>' +
+      k('Jobs', jobs, '#f5b800') + k('Listings', listings, '#d62828') + k('Posts', posts, '#1f9d4a') + k('Reports', reports, '#b14bc4') + k('Notices', notices, '#0f4c81') + k('Feedback', feedback, '#6b7686') + '</div>' +
       '<div class="card"><h3>Needs your attention</h3><div class="tw"><table><tbody>' +
       act('Open Government Connect reports', openReports, 'reports') + act('Businesses waiting for approval', pb, 'businesses') + act('Jobs waiting for approval', pj, 'jobs') +
       '</tbody></table></div><p class="note">Signed in as ' + esc(me ? me.email : '') + '. Changes here update the live database straight away.</p></div>';
@@ -197,6 +207,9 @@
     }
     if (kind === 'service') {
       return '<div class="card"><h3>Add a government service</h3><form class="form" data-form="service"><input name="name" placeholder="Service name" required maxlength="150"><input name="category" placeholder="Category" maxlength="80"><input name="url" placeholder="Website link (https://...)" maxlength="500"><textarea name="description" rows="2" placeholder="Short description" maxlength="1000"></textarea><input name="sort" type="number" placeholder="Sort order (0)" value="0"><button class="btn gold">Add service</button></form></div>';
+    }
+    if (kind === 'circle') {
+      return '<div class="card"><h3>Create a Wantok Circle</h3><form class="form" data-form="circle"><input name="name" placeholder="Circle name" required maxlength="80"><input name="emoji" placeholder="Emoji (for example 🏡)" maxlength="8"><input name="province" placeholder="Province (optional)" maxlength="80"><textarea name="description" rows="2" placeholder="What is this circle for?" maxlength="300"></textarea><button class="btn gold">Create circle</button></form></div>';
     }
     return '';
   }
@@ -293,6 +306,9 @@
         if (url && !/^https?:\/\//i.test(url)) { toast('Link must start with https://'); return; }
         res = await db.from('gov_services').insert({ name: f.elements.name.value.trim(), category: f.elements.category.value.trim() || null, url: url || null, description: f.elements.description.value.trim() || null, sort: parseInt(f.elements.sort.value, 10) || 0 }).select();
         if (await changed(Promise.resolve(res), 'Service added')) load('gov_services');
+      } else if (kind === 'circle') {
+        res = await db.from('circles').insert({ name: f.elements.name.value.trim(), emoji: f.elements.emoji.value.trim() || null, province: f.elements.province.value.trim() || null, description: f.elements.description.value.trim() || null, color: '#d9ecff' }).select();
+        if (await changed(Promise.resolve(res), 'Circle created')) load('circles');
       }
     } finally {
       btn.disabled = false;
