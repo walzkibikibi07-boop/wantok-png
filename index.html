@@ -1626,6 +1626,64 @@ document.addEventListener('input', function (e) {
     }
 
 }
+  /* FIX: MOBILE GOVERNMENT CONNECT LAYOUT */
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+#government-connect {
+    display: block;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.gov-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.gov-hero {
+    width: 100%;
+    min-width: 0;
+}
+
+@media screen and (max-width: 768px) {
+    #government-connect {
+        padding: 16px 12px;
+    }
+
+    .gov-hero {
+        min-height: 420px;
+    }
+
+    .gov-hero-content {
+        padding: 20px 16px;
+        width: 100%;
+    }
+
+    .gov-hero h1 {
+        font-size: 34px;
+    }
+
+    .gov-hero p {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .gov-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
 </style>
 
 
