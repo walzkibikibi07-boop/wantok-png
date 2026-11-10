@@ -864,9 +864,136 @@ SCREENS.jobs = function () {
 
 SCREENS.gov = function () {
   var n = S.notices[0];
-  var grid = [['report', '⚠️', 'Report an Issue'], ['notices', '📢', 'Public Notices'], ['services', '📋', 'Services Guide'], ['directory', '🏛️', 'Contact Offices'], ['reports', '🗂️', 'My Reports'], ['feedback', '💬', 'Feedback']];
-  return '<div class="sh"><h2>Government Connect<span class="vt">✓</span></h2></div><div class="pad"><div class="sgrid">' + grid.map(function (g) { return '<button data-a="govGo" data-v="' + g[0] + '"><span>' + g[1] + '</span>' + T(g[2]) + '</button>'; }).join('') + '</div><h3 class="h3">Latest Notice</h3>'
-  + (n ? '<div class="ncard"><b>' + esc(n.title) + '</b><p>' + esc(n.body) + '</p><small>' + ago(n.created_at) + ' ago</small></div>' : '<div class="empty" style="padding:14px">No notices yet.</div>') + '</div>';
+
+  return `
+  <section id="government-connect" class="govx">
+
+    <div class="govx-hero">
+      <div class="govx-hero-content">
+        <span class="govx-badge">🇵🇬 PNG DIGITAL VISION</span>
+
+        <h1>WANTOK PNG<br>Government Connect</h1>
+
+        <p>
+          Connecting Papua New Guinea's people with government
+          information, public services, development projects
+          and community voices.
+        </p>
+
+        <button class="govx-btn" data-a="govGo" data-v="services">
+          Explore Government Services →
+        </button>
+
+        <a class="govx-btn govx-outline"
+           href="https://parliament.gov.pg/"
+           target="_blank"
+           rel="noopener noreferrer">
+          National Parliament ↗
+        </a>
+      </div>
+    </div>
+
+    <div class="govx-heading">
+      <h2>Government Services & Information</h2>
+      <p>
+        Access useful public information and connect with services
+        from the national level to your district and community.
+      </p>
+    </div>
+
+    <div class="govx-actions">
+
+      <button data-a="govGo" data-v="report">
+        <span>⚠️</span>
+        <b>Report an Issue</b>
+        <small>Raise a community concern</small>
+      </button>
+
+      <button data-a="govGo" data-v="notices">
+        <span>📢</span>
+        <b>Public Notices</b>
+        <small>Read public announcements</small>
+      </button>
+
+      <button data-a="govGo" data-v="services">
+        <span>📋</span>
+        <b>Services Guide</b>
+        <small>Find government services</small>
+      </button>
+
+      <button data-a="govGo" data-v="directory">
+        <span>🏛️</span>
+        <b>Contact Offices</b>
+        <small>Government office directory</small>
+      </button>
+
+      <button data-a="govGo" data-v="reports">
+        <span>🗂️</span>
+        <b>My Reports</b>
+        <small>Track submitted reports</small>
+      </button>
+
+      <button data-a="govGo" data-v="feedback">
+        <span>💬</span>
+        <b>Community Feedback</b>
+        <small>Share your recommendations</small>
+      </button>
+
+    </div>
+
+    <div class="govx-heading">
+      <h2>Latest Public Notice</h2>
+    </div>
+
+    ${
+      n
+      ? `<article class="govx-notice">
+           <b>${esc(n.title)}</b>
+           <p>${esc(n.body)}</p>
+           <small>${ago(n.created_at)} ago</small>
+         </article>`
+      : `<div class="govx-empty">
+           No public notices have been published yet.
+         </div>`
+    }
+
+    <div class="govx-feature">
+      <h2>District & Provincial Development</h2>
+
+      <p>
+        Bring visibility to DSIP and PSIP priorities, roads,
+        bridges, schools, health facilities, water supply and
+        other infrastructure projects across Papua New Guinea.
+      </p>
+
+      <p>
+        Communities can raise concerns and share feedback
+        about local development priorities.
+      </p>
+
+      <button class="govx-btn"
+              data-a="govGo"
+              data-v="feedback">
+        Participate in Community Development →
+      </button>
+    </div>
+
+    <div class="govx-links">
+      <a href="https://www.gov.pg/"
+         target="_blank"
+         rel="noopener noreferrer">
+        PNG Government Information ↗
+      </a>
+
+      <a href="https://parliament.gov.pg/"
+         target="_blank"
+         rel="noopener noreferrer">
+        National Parliament ↗
+      </a>
+    </div>
+
+  </section>
+  `;
 };
 SCREENS.notices = function () { return sub('Public Notices') + '<div class="pad">' + (S.notices.length ? S.notices.map(function (n) { return '<div class="ncard"><b>' + esc(n.title) + '</b><p>' + esc(n.body) + '</p><small>' + ago(n.created_at) + ' ago</small></div>'; }).join('') : '<div class="empty">No notices yet.</div>') + '</div>'; };
 var SERVICES = [
