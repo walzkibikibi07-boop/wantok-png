@@ -1727,7 +1727,21 @@ joinCircle: async function (el) {
 circleChat: function (el) { go('cchat', { id: el.dataset.id }); },
 editProfile: function () { profileModal(false); },
 regBiz: function () { bizModal(); },
-about: function () { sheet('About WANTOK PNG', '<img src="' + LOGO_SRC + '" alt="WANTOK PNG" style="display:block;width:170px;height:170px;border-radius:50%;margin:0 auto 14px;box-shadow:0 4px 14px rgba(0,0,0,.25)"><p class="desc">WANTOK PNG: Our People • Our Culture • Our Future.<br><br>Connect, share, support and grow. Your posts, listings, jobs and reports are saved online so your wantoks across PNG can see them.</p><button class="btn alt" data-a="close">Close</button>'); }
+  showQR: function () {
+  var url = 'https://walzkibikibi07-boop.github.io/wantok-png/';
+  var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(url);
+
+  sheet('WANTOK PNG QR CODE',
+    '<div style="text-align:center;padding:15px">' +
+    '<h3 style="color:#d4a017">🇵🇬 SHARE WANTOK PNG</h3>' +
+    '<img src="' + qr + '" alt="WANTOK PNG QR Code" style="width:240px;height:240px;max-width:100%;border:8px solid white;border-radius:12px">' +
+    '<p>Scan this QR Code to visit WANTOK PNG.</p>' +
+    '<button class="btn" onclick="window.open(\'' + url + '\',\'_blank\')">OPEN WANTOK PNG</button>' +
+    '<button class="btn alt" onclick="navigator.clipboard.writeText(\'' + url + '\')">COPY WEBSITE LINK</button>' +
+    '</div>'
+  );
+},
+about: function (){ sheet('About WANTOK PNG', '<img src="' + LOGO_SRC + '" alt="WANTOK PNG" style="display:block;width:170px;height:170px;border-radius:50%;margin:0 auto 14px;box-shadow:0 4px 14px rgba(0,0,0,.25)"><p class="desc">WANTOK PNG: Our People • Our Culture • Our Future.<br><br>Connect, share, support and grow. Your posts, listings, jobs and reports are saved online so your wantoks across PNG can see them.</p><button class="btn alt" data-a="close">Close</button>'); }
 };
 document.addEventListener('click', function (e) {
   var el = e.target.closest && e.target.closest('[data-a]'); if (!el) return;
