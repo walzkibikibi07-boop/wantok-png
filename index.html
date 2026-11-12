@@ -1468,7 +1468,9 @@ SCREENS.more = function () {
   + row('🏪', 'Register a Business', 'Get listed in the WANTOK PNG directory', '', 'regBiz')
   + row('🌐', T('Language'), P.lang === 'tp' ? 'Tok Pisin' : 'English', '<span class="sw' + (P.lang === 'tp' ? ' on' : '') + '"><i></i></span>', 'toggleLang')
   + row('📶', T('Data Saver'), 'Hide photos to save mobile data', '<span class="sw' + (P.saver ? ' on' : '') + '"><i></i></span>', 'toggleSaver')
-  + row('ℹ️', 'About WANTOK PNG', '', '', 'about') + (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div>';
+  + row('📱', 'Share WANTOK PNG', 'Scan QR code to visit our platform', '', 'showQR')
++ row('ℹ️', 'About WANTOK PNG', '', '', 'about')
++ (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div>';
 };
 SCREENS.profile = function () {
   if (!S.user) return sub(T('Profile')) + '<div class="empty">Sign in to see your profile.<br><button class="btn sm" style="margin-top:10px" data-a="signin">Sign in</button></div>';
