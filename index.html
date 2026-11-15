@@ -121,63 +121,45 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .t-gov .ic{background:#f5b800;color:#07203f;top:50%;transform:translateY(-50%)}
 .t-gov .arrow{bottom:auto;top:50%;transform:translateY(-50%)}
 .t-gov h3{font-size:19px}
-/* WANTOK PNG — PNG PHOTOGRAPHY SYSTEM
-   Images are served from Wikimedia Commons. Each card keeps a dark
-   gradient beneath its text so the design remains readable if an image fails.
-*/
-:root {
-  --png-hero: url("https://commons.wikimedia.org/wiki/Special:FilePath/Goroka%20(5502136702).jpg?width=1600");
-  --png-market: url("https://commons.wikimedia.org/wiki/Special:FilePath/GorokaMarket.jpg?width=1000");
-  --png-work: url("https://commons.wikimedia.org/wiki/Special:FilePath/A%20welcome%20at%20a%20remote%20village%20near%20Lae%20for%20David%20(5501549357).jpg?width=1000");
-  --png-wantok: url("https://commons.wikimedia.org/wiki/Special:FilePath/Happy%20people%20in%20PNG%20(5)%20(6357407649).jpg?width=1000");
-  --png-talent: url("https://commons.wikimedia.org/wiki/Special:FilePath/Goroka%20Show%20-%20Lastra.jpg?width=1000");
-  --png-government: url("https://commons.wikimedia.org/wiki/Special:FilePath/Papua%20New%20Guinea%2C%20Parliament%2C%20Port%20Moresby.jpg?width=1400");
-}
-.banner {
-  background-image: linear-gradient(90deg,rgba(7,20,36,.72),rgba(7,20,36,.12)), var(--png-hero), linear-gradient(135deg,#174c65,#6c9b65);
+/* WANTOK PNG - REAL PHOTOGRAPHY */
+
+.hero {
+  background-image:
+    linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)),
+    url('https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1600');
   background-size: cover;
-  background-position: center 45%;
-}
-.t-market {
-  background-image: linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.78)), var(--png-market), linear-gradient(135deg,#8a1b12,#d85a1e 45%,#6a8f2a);
-  background-size: cover; background-position: center;
-}
-.t-work {
-  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-work), linear-gradient(135deg,#3a2a10,#a4701a 60%,#e2b52b);
-  background-size: cover; background-position: center;
-}
-.t-wantok {
-  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-wantok), linear-gradient(135deg,#0c3b1c,#2e7a3f 55%,#7a4a1a);
-  background-size: cover; background-position: center;
-}
-.t-talent {
-  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-talent), linear-gradient(135deg,#2b0a2f,#7a1f7a 55%,#c0366a);
-  background-size: cover; background-position: center;
-}
-.t-gov, .t-government {
-  background-image: linear-gradient(90deg,rgba(0,15,35,.72),rgba(0,15,35,.12)), var(--png-government), linear-gradient(110deg,#07203f,#0f4c81 60%,#1a6fb0);
-  background-size: cover; background-position: center 42%;
-}
-.t-business {
-  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.82)), var(--png-market), linear-gradient(135deg,#8a1b12,#d85a1e 45%,#6a8f2a);
-  background-size: cover; background-position: center;
-}
-.t-business::before { background: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.55)); }
-.t-business .ic { background:#f5b800; color:#0d1b2e; }
-.t-business h3 { font-size:20px; }
-.photo-credit { font-size:9px; margin-top:3px; }
-.gov-hero {
-  background-image: linear-gradient(to top,rgba(0,30,20,.92),rgba(0,30,20,.12)), var(--png-government), linear-gradient(135deg,#174c65,#6c9b65);
-  background-size:cover; background-position:center;
-}
-/* Mobile photo cards: keep the image crop attractive and text legible. */
-@media (max-width:480px) {
-  .banner { height:150px; background-position:center; }
-  .tile { min-height:148px; background-position:center; }
-  .t-gov { min-height:108px; }
-  .gov-hero { min-height:280px; }
+  background-position: center;
 }
 
+.t-market {
+  background-image: url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1000');
+  background-size: cover;
+  background-position: center;
+}
+
+.t-work {
+  background-image: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000');
+  background-size: cover;
+  background-position: center;
+}
+
+.t-wantok {
+  background-image: url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1000');
+  background-size: cover;
+  background-position: center;
+}
+
+.t-talent {
+  background-image: url('https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1000');
+  background-size: cover;
+  background-position: center;
+}
+
+.t-government {
+  background-image: url('https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1000');
+  background-size: cover;
+  background-position: center;
+  }
 /* sections */
 .sec{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 10px}
 .sec h2{font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px}
@@ -188,11 +170,6 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .comp-acts{display:flex;justify-content:space-around;margin-top:10px;padding-top:10px;border-top:1px solid #edf0f4}
 .comp-acts button{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;color:#333}
 .av{border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
-
-/* Responsive image handling for user posts, listings and previews */
-img, video { max-width:100%; }
-.media, .card img, .ncard img { display:block; width:100%; object-fit:cover; }
-img[loading="lazy"] { background:#e8edf2; }
 
 /* horizontal cards */
 .hscroll{display:flex;gap:10px;overflow-x:auto;padding:0 12px 6px;scrollbar-width:none}
@@ -368,6 +345,55 @@ body.saver .thumb{background:#dfe5ec!important}
 body.saver .tv{display:none!important}
 #live .fh{position:absolute;right:16px;bottom:10px;font-size:28px;pointer-events:none;z-index:3;animation:fh 2.4s ease-out forwards}
 @keyframes fh{0%{opacity:1;transform:translate(0,0) scale(.8)}100%{opacity:0;transform:translate(var(--dx,0),-240px) scale(1.4)}}
+
+/* National Intelligence Services shortcut beside language selector */
+.intel-top-btn{background:transparent!important;color:#000!important;border:0!important;box-shadow:none!important;font-style:italic;font-weight:700;white-space:nowrap}
+@media(max-width:480px){.ctrl{display:flex;gap:7px;flex-wrap:wrap}.intel-top-btn{font-size:11px;padding:8px 10px}}
+
+/* WANTOK PNG NATIONAL INTELLIGENCE & DIGITAL SERVICES */
+.intel-hero{margin:12px;padding:18px;border-radius:20px;color:#fff;background:linear-gradient(130deg,#0d1b2e,#14558a 62%,#1f9d4a);box-shadow:0 5px 16px rgba(13,27,46,.18)}
+.intel-hero .eyebrow{font-size:11px;letter-spacing:1.4px;font-weight:800;color:#f5b800}
+.intel-hero h2{font-size:23px;line-height:1.15;margin:7px 0}
+.intel-hero p{font-size:13px;line-height:1.45;color:#e9f2fb}
+.intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px}
+.intel-card{background:#fff;border-radius:15px;padding:13px;box-shadow:0 1px 5px rgba(0,0,0,.08);min-height:112px}
+.intel-card .ii{font-size:25px;display:block;margin-bottom:7px}
+.intel-card b{display:block;font-size:14px;color:#132238}
+.intel-card small{display:block;color:#687386;font-size:11.5px;line-height:1.35;margin-top:4px}
+.intel-location{margin:12px;background:#fff;border:1px solid #dfe6ef;border-radius:17px;padding:14px;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.intel-location h3{font-size:16px;margin-bottom:5px}
+.intel-location p{font-size:13px;color:#687386;line-height:1.4;margin:5px 0 10px}
+.intel-coords{background:#f1f5f9;border-radius:10px;padding:10px;font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin:9px 0}
+.intel-map{width:100%;height:230px;border:0;border-radius:12px;margin-top:10px;background:#e8eef4}
+.intel-actions{display:flex;gap:8px;flex-wrap:wrap}
+.intel-actions .btn{flex:1;min-width:135px}
+.intel-note{margin:12px;padding:11px 13px;border-radius:12px;background:#fff4d6;color:#654b09;font-size:12px;line-height:1.45}
+.intel-section{padding:4px 12px}
+.intel-section h3{font-size:16px;margin:14px 2px 8px}
+.intel-link{display:flex;align-items:center;gap:10px;background:#fff;border-radius:13px;padding:12px;margin-bottom:8px;box-shadow:0 1px 4px rgba(0,0,0,.06);width:100%}
+.intel-link span:first-child{font-size:22px}.intel-link b{display:block;font-size:13.5px}.intel-link small{display:block;color:#718096;font-size:11.5px;margin-top:2px}.intel-link .arr{margin-left:auto;color:#1565c0}
+
+
+/* WANTOK PNG typography: familiar, readable mobile font scale */
+html{font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-size:16px;line-height:1.5}
+button,input,select,textarea{font-size:14px}
+input,select,textarea{font-size:16px}
+.brand h1{font-size:26px;line-height:1.15}
+.brand p{font-size:13px;line-height:1.4}
+.sec h2,.sh h2,.h3{font-size:18px;line-height:1.3}
+.tile h3{font-size:20px;line-height:1.2}
+.tile p,.alert p,.desc,.note,.gnote{font-size:14px;line-height:1.5}
+.chip,.comp-acts button,.sec a{font-size:14px}
+.story,.circle b,.card h4{font-size:13px}
+.circle small,.info small,.tag,.pill{font-size:12px}
+.intel-top-btn{font-size:14px!important;font-style:italic;font-weight:700}
+@media(max-width:480px){
+  body{font-size:16px}
+  .intel-top-btn{font-size:14px!important;padding:7px 9px}
+  .brand h1{font-size:24px}
+  .tile h3{font-size:18px}
+}
 </style>
 <style id="gov-connect-css">
 #government-connect {
@@ -1356,7 +1382,7 @@ SCREENS.home = function () {
   trending = trendingWithVideos(trending);
   var seen = P.viewed;
   return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('One PNG. One Community.') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + IC.user + '</button></div></div>'
-  + '<div class="ctrl"><button class="chip" data-a="toggleLang">🌐 ' + (P.lang === 'tp' ? 'Tok Pisin' : 'English') + '</button><button class="chip' + (P.saver ? ' on' : '') + '" data-a="toggleSaver">📶 Data Saver' + (P.saver ? ': ON' : '') + '</button><button class="chip" data-a="refresh">↻ Refresh</button></div>'
+  + '<div class="ctrl"><button class="chip" data-a="toggleLang">🌐 ' + (P.lang === 'tp' ? 'Tok Pisin' : 'English') + '</button><button class="chip intel-top-btn" data-a="go" data-v="intelligence">🇵🇬 National Intelligence Services</button></div>'
   + '<form class="search" data-form="gsearch">' + IC.search + '<input name="q" placeholder="' + esc(T('Search Wantok PNG')) + '" autocomplete="off"></form>'
   + guestCard('Sign in to post, message, apply and report.')
   + '<div class="stories"><button class="story" data-a="storyAdd"><div class="ring you"><span>+</span></div>' + T('Your Story') + '</button>'
@@ -1512,16 +1538,53 @@ function tcard(t, i) {
 }
 SCREENS.talent = function () { var a = sortedTalents(); return sub(T('Talent'), '<button class="btn sm" data-a="submitTalent">+ Enter</button>') + '<div class="pad"><div class="gnote">Vote for your favourite. Tap + Enter to show your own talent.</div>' + (a.length ? a.map(tcard).join('') : '<div class="empty">No entries yet. Be the first!</div>') + '</div>'; };
 
+
+/* ---------- National Intelligence & Digital Services (client-facing) ---------- */
+var WANTOK_GEO = null;
+function intelligenceMap(lat, lon) {
+  var d = 0.012;
+  var bbox = [lon-d, lat-d, lon+d, lat+d].join('%2C');
+  return 'https://www.openstreetmap.org/export/embed.html?bbox=' + bbox + '&layer=mapnik&marker=' + encodeURIComponent(lat + ',' + lon);
+}
+function intelligenceScreen() {
+  var profilePlace = [S.profile && S.profile.district, S.profile && S.profile.province].filter(Boolean).join(', ');
+  var locationBlock = WANTOK_GEO
+    ? '<div class="intel-coords"><b>Latitude:</b> ' + WANTOK_GEO.lat.toFixed(6) + '<br><b>Longitude:</b> ' + WANTOK_GEO.lon.toFixed(6) + '<br><b>Accuracy:</b> approximately ' + Math.round(WANTOK_GEO.accuracy) + ' metres<br><b>Captured:</b> ' + esc(new Date(WANTOK_GEO.at).toLocaleString()) + '</div>'
+      + '<iframe class="intel-map" title="Your selected location on OpenStreetMap" loading="lazy" src="' + intelligenceMap(WANTOK_GEO.lat, WANTOK_GEO.lon) + '"></iframe>'
+      + '<div class="intel-actions" style="margin-top:10px"><button class="btn sm" data-a="intelOpenMap">Open full map ↗</button><button class="btn sm alt" data-a="intelShareLocation">Share my location</button></div>'
+    : '<div class="intel-coords">Location has not been requested. Tap the button below and choose Allow if you want this service to use your phone location.</div>';
+  return '<div class="sh"><button class="ib" data-a="back" aria-label="Back">' + IC.back + '</button><h2 class="ch">Intelligence Centre</h2></div>'
+    + '<div class="intel-hero"><div class="eyebrow">WANTOK PNG • NATIONAL DIGITAL SERVICES</div><h2>Information. Opportunities. Community connection.</h2><p>Discover useful services and local opportunities across Papua New Guinea. Your precise location is only accessed when you choose to share it.</p></div>'
+    + '<div class="intel-location"><h3>📍 My Location Connect</h3><p>' + (profilePlace ? 'Your profile area: ' + esc(profilePlace) + '. ' : '') + 'Use your phone GPS to view your current position on a map. Location is not uploaded to WANTOK PNG by this feature.</p>'
+    + locationBlock + '<button class="btn" style="margin-top:10px" data-a="intelGetLocation">' + (WANTOK_GEO ? '↻ Update my location' : '📍 Use my phone location') + '</button></div>'
+    + '<div class="intel-section"><h3>Explore WANTOK PNG services</h3></div>'
+    + '<div class="intel-grid">'
+    + '<button class="intel-card" data-a="tab" data-v="market"><span class="ii">🏪</span><b>Business Intelligence</b><small>Discover shops, suppliers, products and local services.</small></button>'
+    + '<button class="intel-card" data-a="tab" data-v="jobs"><span class="ii">💼</span><b>Opportunity Finder</b><small>Explore jobs, skills and work opportunities.</small></button>'
+    + '<button class="intel-card" data-a="tab" data-v="gov"><span class="ii">🏛️</span><b>Government Connect</b><small>Access public information and service pathways.</small></button>'
+    + '<button class="intel-card" data-a="go" data-v="services"><span class="ii">🧭</span><b>Services Guide</b><small>Find guidance on common public services.</small></button>'
+    + '<button class="intel-card" data-a="go" data-v="reports"><span class="ii">🛡️</span><b>Community Safety</b><small>Submit and follow community issue reports.</small></button>'
+    + '<button class="intel-card" data-a="go" data-v="circles"><span class="ii">🤝</span><b>Community Connect</b><small>Join local-interest Wantok circles.</small></button>'
+    + '</div>'
+    + '<div class="intel-note"><b>Location privacy:</b> Your browser will ask permission before accessing GPS. This first release keeps coordinates in this page session only; it does not continuously track you or save your precise location to the database. Distance-based business sorting will require verified GPS coordinates on business listings.</div>'
+    + '<div class="intel-section"><h3>National information tools</h3>'
+    + '<button class="intel-link" data-a="intelOpenMap"><span>🗺️</span><span><b>Open map service</b><small>View your current location when GPS is enabled.</small></span><span class="arr">↗</span></button>'
+    + '<button class="intel-link" data-a="go" data-v="directory"><span>🏢</span><span><b>Contact offices</b><small>Find the listed pathways for local offices.</small></span><span class="arr">›</span></button>'
+    + '<button class="intel-link" data-a="go" data-v="notes"><span>📢</span><span><b>Public notices & alerts</b><small>Review notices published in WANTOK PNG.</small></span><span class="arr">›</span></button>'
+    + '</div>';
+}
+SCREENS.intelligence = function () { return intelligenceScreen(); };
+
 SCREENS.more = function () {
   function row(ic, t, sub2, right, act, v) { return '<button class="mrow" data-a="' + act + '"' + (v ? ' data-v="' + v + '"' : '') + '><span class="mi">' + ic + '</span><span class="mt">' + t + (sub2 ? '<small>' + sub2 + '</small>' : '') + '</span>' + (right || '') + '</button>'; }
   var head = S.user ? '<div class="pcard">' + av(myName(), '#f5b800', 54) + '<div style="flex:1"><b>' + esc(myName()) + '</b><small>' + esc([S.profile && S.profile.district, S.profile && S.profile.province].filter(Boolean).join(', ') || (S.user.email || S.user.phone || '')) + '</small></div><button class="btn sm alt" data-a="editProfile">Edit</button></div>'
     : '<div class="pcard">' + av('?', '#9aa5b4', 54) + '<div style="flex:1"><b>Guest</b><small>Sign in to post, message and apply</small></div><button class="btn sm gold" data-a="signin">Sign in</button></div>';
   return '<div class="sh"><h2>' + T('More') + '</h2></div><div class="pad">' + head
+  + row('🇵🇬', 'National Intelligence Centre', 'Maps, services, opportunities and community information', '', 'go', 'intelligence')
   + row('🔔', T('Notifications'), unreadNotes() + ' new', '', 'go', 'notes') + row('🤝', T('Wantok Circles'), '', '', 'go', 'circles') + row('⭐', T('Talent'), '', '', 'go', 'talent')
   + row('❤️', T('Saved Items'), Object.keys(S.saved).length + ' saved', '', 'go', 'saved') + row('🗂️', T('My Posts & Listings'), '', '', 'go', 'mine')
   + row('🏪', 'Register a Business', 'Get listed in the WANTOK PNG directory', '', 'regBiz')
   + row('🌐', T('Language'), P.lang === 'tp' ? 'Tok Pisin' : 'English', '<span class="sw' + (P.lang === 'tp' ? ' on' : '') + '"><i></i></span>', 'toggleLang')
-  + row('📶', T('Data Saver'), 'Hide photos to save mobile data', '<span class="sw' + (P.saver ? ' on' : '') + '"><i></i></span>', 'toggleSaver')
   + row('📱', 'Share WANTOK PNG', 'Scan QR code to visit our platform', '', 'showQR')
 + row('ℹ️', 'About WANTOK PNG', '', '', 'about')
 + (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div>';
@@ -2018,6 +2081,29 @@ joinCircle: async function (el) {
 circleChat: function (el) { go('cchat', { id: el.dataset.id }); },
 editProfile: function () { profileModal(false); },
 regBiz: function () { bizModal(); },
+  intelGetLocation: function () {
+    if (!navigator.geolocation) { toast('GPS location is not supported by this browser'); return; }
+    toast('Requesting location permission…');
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      WANTOK_GEO = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy || 0, at: Date.now() };
+      render(true); toast('Your location is ready');
+    }, function (err) {
+      var msg = err.code === 1 ? 'Location permission was denied. Allow location in your browser settings if you want to use GPS.' : err.code === 2 ? 'Your phone could not determine its location. Try outdoors with Location turned on.' : 'Location request timed out. Please try again.';
+      toast(msg);
+    }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
+  },
+  intelOpenMap: function () {
+    if (!WANTOK_GEO) { toast('First tap Use my phone location'); return; }
+    window.open('https://www.openstreetmap.org/?mlat=' + WANTOK_GEO.lat + '&mlon=' + WANTOK_GEO.lon + '#map=16/' + WANTOK_GEO.lat + '/' + WANTOK_GEO.lon, '_blank', 'noopener');
+  },
+  intelShareLocation: function () {
+    if (!WANTOK_GEO) { toast('First tap Use my phone location'); return; }
+    var url = 'https://www.openstreetmap.org/?mlat=' + WANTOK_GEO.lat + '&mlon=' + WANTOK_GEO.lon + '#map=16/' + WANTOK_GEO.lat + '/' + WANTOK_GEO.lon;
+    var msg = 'My location shared from WANTOK PNG: ' + url;
+    if (navigator.share) navigator.share({ title: 'My WANTOK PNG location', text: msg }).catch(function () {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(msg).then(function () { toast('Location link copied. Share it only with someone you trust.'); }, function () { toast('Could not copy location link'); });
+    else toast('Sharing is not available in this browser');
+  },
   showQR: function () {
   var url = 'https://walzkibikibi07-boop.github.io/wantok-png/';
   var qr = 'https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=' + encodeURIComponent(url);
