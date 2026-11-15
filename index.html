@@ -1198,6 +1198,85 @@ async function uploadPhoto(file) {
   if (r.error) throw r.error;
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+  // WANTOK PNG PROFILE PHOTO CROPPING
+var authPhotoFile = null;
+var authPhotoZoom = 1;
+
+function makeFaceCrop(file, zoom) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+
+    reader.onload = function(event) {
+      var img = new Image();
+
+      img.onload = function() {
+        var size = Math.min(img.width, img.height);
+        var cropSize = size / (zoom || 1);
+
+        var sx = (img.width - cropSize) / 2;
+        var sy = (img.height - cropSize) / 2;
+
+        var canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+
+        var ctx = canvas.getContext('2d');
+
+        ctx.drawImage(
+          img,
+          sx, sy, cropSize, cropSize,
+          0, 0, 512, 512
+        );
+
+        canvas.toBlob(function(blob) {
+          if (!blob) {
+            reject(new Error('Photo cropping failed.'));
+            return;
+          }
+
+          resolve(blob);
+        }, 'image/jpeg', 0.85);
+      };
+
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Upload the cropped profile photograph
+async function uploadAvatar(file, zoom) {
+  var blob = await makeFaceCrop(file, zoom);
+
+  var path = S.user.id + '/avatar-' +
+    Date.now() + '.jpg';
+
+  var result = await db.storage
+    .from(BUCKET)
+    .upload(path, blob, {
+      contentType: 'image/jpeg',
+      upsert: true
+    });
+
+  if (result.error) throw result.error;
+
+  var url = db.storage
+    .from(BUCKET)
+    .getPublicUrl(path).data.publicUrl;
+
+  var update = await db.auth.updateUser({
+    data: {
+      photo_url: url
+    }
+  });
+
+  if (update.error) throw update.error;
+
+  return url;
+}
 function isVideoFile(f) { return !!f && (/^video\//.test(f.type) || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name || '')); }
 async function uploadVideo(file) {
   if (file.size > 50 * 1024 * 1024) throw new Error('That video is too big (max 50 MB). Record a shorter one.');
