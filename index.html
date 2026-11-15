@@ -121,45 +121,63 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .t-gov .ic{background:#f5b800;color:#07203f;top:50%;transform:translateY(-50%)}
 .t-gov .arrow{bottom:auto;top:50%;transform:translateY(-50%)}
 .t-gov h3{font-size:19px}
-/* WANTOK PNG - REAL PHOTOGRAPHY */
-
-.hero {
-  background-image:
-    linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.45)),
-    url('https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=1600');
-  background-size: cover;
-  background-position: center;
+/* WANTOK PNG — PNG PHOTOGRAPHY SYSTEM
+   Images are served from Wikimedia Commons. Each card keeps a dark
+   gradient beneath its text so the design remains readable if an image fails.
+*/
+:root {
+  --png-hero: url("https://commons.wikimedia.org/wiki/Special:FilePath/Goroka%20(5502136702).jpg?width=1600");
+  --png-market: url("https://commons.wikimedia.org/wiki/Special:FilePath/GorokaMarket.jpg?width=1000");
+  --png-work: url("https://commons.wikimedia.org/wiki/Special:FilePath/A%20welcome%20at%20a%20remote%20village%20near%20Lae%20for%20David%20(5501549357).jpg?width=1000");
+  --png-wantok: url("https://commons.wikimedia.org/wiki/Special:FilePath/Happy%20people%20in%20PNG%20(5)%20(6357407649).jpg?width=1000");
+  --png-talent: url("https://commons.wikimedia.org/wiki/Special:FilePath/Goroka%20Show%20-%20Lastra.jpg?width=1000");
+  --png-government: url("https://commons.wikimedia.org/wiki/Special:FilePath/Papua%20New%20Guinea%2C%20Parliament%2C%20Port%20Moresby.jpg?width=1400");
 }
-
+.banner {
+  background-image: linear-gradient(90deg,rgba(7,20,36,.72),rgba(7,20,36,.12)), var(--png-hero), linear-gradient(135deg,#174c65,#6c9b65);
+  background-size: cover;
+  background-position: center 45%;
+}
 .t-market {
-  background-image: url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1000');
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.78)), var(--png-market), linear-gradient(135deg,#8a1b12,#d85a1e 45%,#6a8f2a);
+  background-size: cover; background-position: center;
 }
-
 .t-work {
-  background-image: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000');
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-work), linear-gradient(135deg,#3a2a10,#a4701a 60%,#e2b52b);
+  background-size: cover; background-position: center;
 }
-
 .t-wantok {
-  background-image: url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=1000');
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-wantok), linear-gradient(135deg,#0c3b1c,#2e7a3f 55%,#7a4a1a);
+  background-size: cover; background-position: center;
 }
-
 .t-talent {
-  background-image: url('https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=1000');
-  background-size: cover;
-  background-position: center;
+  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.78)), var(--png-talent), linear-gradient(135deg,#2b0a2f,#7a1f7a 55%,#c0366a);
+  background-size: cover; background-position: center;
+}
+.t-gov, .t-government {
+  background-image: linear-gradient(90deg,rgba(0,15,35,.72),rgba(0,15,35,.12)), var(--png-government), linear-gradient(110deg,#07203f,#0f4c81 60%,#1a6fb0);
+  background-size: cover; background-position: center 42%;
+}
+.t-business {
+  background-image: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.82)), var(--png-market), linear-gradient(135deg,#8a1b12,#d85a1e 45%,#6a8f2a);
+  background-size: cover; background-position: center;
+}
+.t-business::before { background: linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.55)); }
+.t-business .ic { background:#f5b800; color:#0d1b2e; }
+.t-business h3 { font-size:20px; }
+.photo-credit { font-size:9px; margin-top:3px; }
+.gov-hero {
+  background-image: linear-gradient(to top,rgba(0,30,20,.92),rgba(0,30,20,.12)), var(--png-government), linear-gradient(135deg,#174c65,#6c9b65);
+  background-size:cover; background-position:center;
+}
+/* Mobile photo cards: keep the image crop attractive and text legible. */
+@media (max-width:480px) {
+  .banner { height:150px; background-position:center; }
+  .tile { min-height:148px; background-position:center; }
+  .t-gov { min-height:108px; }
+  .gov-hero { min-height:280px; }
 }
 
-.t-government {
-  background-image: url('https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1000');
-  background-size: cover;
-  background-position: center;
-  }
 /* sections */
 .sec{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 10px}
 .sec h2{font-size:19px;font-weight:800;display:flex;align-items:center;gap:8px}
@@ -170,6 +188,11 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .comp-acts{display:flex;justify-content:space-around;margin-top:10px;padding-top:10px;border-top:1px solid #edf0f4}
 .comp-acts button{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;color:#333}
 .av{border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+
+/* Responsive image handling for user posts, listings and previews */
+img, video { max-width:100%; }
+.media, .card img, .ncard img { display:block; width:100%; object-fit:cover; }
+img[loading="lazy"] { background:#e8edf2; }
 
 /* horizontal cards */
 .hscroll{display:flex;gap:10px;overflow-x:auto;padding:0 12px 6px;scrollbar-width:none}
@@ -1614,7 +1637,244 @@ function talentModal() {
 }
 function bizModal() {
   if (needLogin('Sign in to register a business')) return;
-  sheet('Register a Business', '<div class="gnote">Your business is listed after the WANTOK PNG team approves it.</div><form data-form="business"><div class="field"><label class="l">Business name</label><input name="name" required maxlength="150"></div><div class="field"><label class="l">Category</label><input name="category" maxlength="80" placeholder="e.g. Grocery, Transport, Building"></div><div class="field"><label class="l">Province</label><select name="province"><option value="">Choose province</option>' + opts(PROVINCES, S.profile && S.profile.province) + '</select></div><div class="field"><label class="l">Town / location</label><input name="town" maxlength="80"></div><div class="field"><label class="l">Phone</label><input name="phone" type="tel" maxlength="30"></div><div class="field"><label class="l">WhatsApp (optional)</label><input name="whatsapp" type="tel" maxlength="30"></div><div class="field"><label class="l">About the business</label><textarea name="desc" rows="3" maxlength="1000"></textarea></div><button class="btn">Submit</button></form>');
+
+  sheet('🇵🇬 ADVANCED BUSINESS CONNECT', `
+    <div class="gnote">
+      WANTOK PNG NATIONAL BUSINESS NETWORK<br>
+      Register your business and connect with customers,
+      suppliers and business opportunities throughout Papua New Guinea.
+    </div>
+
+    <form data-form="business">
+
+      <h3 class="h3">1. BUSINESS IDENTITY</h3>
+
+      <div class="field">
+        <label class="l">Registered Business Name *</label>
+        <input name="name" required maxlength="150">
+      </div>
+
+      <div class="field">
+        <label class="l">Trading Name</label>
+        <input name="trading_name" maxlength="150">
+      </div>
+
+      <div class="field">
+        <label class="l">Business Category *</label>
+        <select name="category" required>
+          <option value="">Select Business Sector</option>
+          <option>Retail and Supermarkets</option>
+          <option>Grocery and General Stores</option>
+          <option>Wholesale and Distribution</option>
+          <option>Hardware and Building Supplies</option>
+          <option>Drapery and Textiles</option>
+          <option>Fashion and Clothing</option>
+          <option>Electronics and Appliances</option>
+          <option>Electrical Services</option>
+          <option>Computers and ICT</option>
+          <option>Telecommunications</option>
+          <option>Construction and Engineering</option>
+          <option>Plumbing and Carpentry</option>
+          <option>Transport and Logistics</option>
+          <option>PMV and Taxi Services</option>
+          <option>Agriculture and Farming</option>
+          <option>Fishing and Aquaculture</option>
+          <option>Livestock and Poultry</option>
+          <option>Hospitality and Accommodation</option>
+          <option>Restaurants and Catering</option>
+          <option>Tourism and Travel</option>
+          <option>Health and Medical Services</option>
+          <option>Pharmacy and Medical Supplies</option>
+          <option>Education and Training</option>
+          <option>Financial Services</option>
+          <option>Insurance</option>
+          <option>Legal and Professional Services</option>
+          <option>Real Estate and Property</option>
+          <option>Automotive and Spare Parts</option>
+          <option>Manufacturing and Processing</option>
+          <option>Mining and Resources</option>
+          <option>Energy and Solar Services</option>
+          <option>Printing and Publishing</option>
+          <option>Media and Entertainment</option>
+          <option>Beauty and Personal Care</option>
+          <option>Cleaning and Maintenance</option>
+          <option>Security Services</option>
+          <option>Consulting and Business Services</option>
+          <option>Import and Export</option>
+          <option>Other Business</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="l">Business Structure</label>
+        <select name="business_type">
+          <option value="">Select Structure</option>
+          <option>Sole Trader</option>
+          <option>Partnership</option>
+          <option>Private Limited Company</option>
+          <option>Public Company</option>
+          <option>Cooperative</option>
+          <option>Association</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="l">IPA Registration Number</label>
+        <input name="ipa_number" maxlength="60"
+          placeholder="Enter official IPA number">
+      </div>
+
+      <div class="field">
+        <label class="l">Year Established</label>
+        <input name="year_established" type="number"
+          min="1900" max="2100">
+      </div>
+
+      <h3 class="h3">2. OWNERSHIP AND MANAGEMENT</h3>
+
+      <div class="field">
+        <label class="l">Owner / Director Full Name *</label>
+        <input name="owner_name" required maxlength="150">
+      </div>
+
+      <div class="field">
+        <label class="l">Business Contact Person</label>
+        <input name="contact_person" maxlength="120">
+      </div>
+
+      <div class="field">
+        <label class="l">Business Email</label>
+        <input name="business_email" type="email">
+      </div>
+
+      <h3 class="h3">3. BUSINESS LOCATION</h3>
+
+      <div class="field">
+        <label class="l">Province *</label>
+        <select name="province" required>
+          <option value="">Choose Province</option>
+          ${opts(PROVINCES, S.profile && S.profile.province)}
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="l">District</label>
+        <input name="district">
+      </div>
+
+      <div class="field">
+        <label class="l">LLG</label>
+        <input name="llg">
+      </div>
+
+      <div class="field">
+        <label class="l">Town / Suburb</label>
+        <input name="town">
+      </div>
+
+      <div class="field">
+        <label class="l">Ward / Village</label>
+        <input name="village">
+      </div>
+
+      <div class="field">
+        <label class="l">Street / Landmark</label>
+        <input name="street">
+      </div>
+
+      <h3 class="h3">4. CUSTOMER COMMUNICATION</h3>
+
+      <div class="field">
+        <label class="l">Business Phone *</label>
+        <input name="phone" type="tel" required>
+      </div>
+
+      <div class="field">
+        <label class="l">WhatsApp Number</label>
+        <input name="whatsapp" type="tel">
+      </div>
+
+      <div class="field">
+        <label class="l">Website</label>
+        <input name="website" type="url">
+      </div>
+
+      <h3 class="h3">5. PRODUCTS AND SERVICES</h3>
+
+      <div class="field">
+        <label class="l">Products Available</label>
+        <textarea name="products" rows="3"
+          placeholder="List your products"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="l">Services Offered</label>
+        <textarea name="services" rows="3"
+          placeholder="Describe your services"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="l">Business Description</label>
+        <textarea name="desc" rows="4"
+          maxlength="1500"
+          placeholder="Tell customers about your business"></textarea>
+      </div>
+
+      <h3 class="h3">6. BUSINESS OPERATIONS</h3>
+
+      <div class="field">
+        <label class="l">Operating Hours</label>
+        <input name="hours"
+          placeholder="e.g. Monday-Friday 8am-5pm">
+      </div>
+
+      <div class="field">
+        <label class="l">Delivery Services</label>
+        <select name="delivery">
+          <option value="">Select</option>
+          <option>Yes - Nationwide</option>
+          <option>Yes - Local Delivery</option>
+          <option>Collection Only</option>
+          <option>No Delivery</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="l">Accepted Payment Methods</label>
+        <select name="payment">
+          <option value="">Select Payment Method</option>
+          <option>Cash</option>
+          <option>Bank Transfer</option>
+          <option>BSP Mobile Banking</option>
+          <option>Card Payment</option>
+          <option>Online Payment</option>
+          <option>Multiple Payment Methods</option>
+        </select>
+      </div>
+
+      <h3 class="h3">7. BUSINESS DECLARATION</h3>
+
+      <div class="gnote">
+        By submitting this application, you confirm that
+        the information supplied is accurate and that you
+        are authorised to register this business.
+        IPA registration details may be subject to verification.
+      </div>
+
+      <div class="field">
+        <label>
+          <input type="checkbox" name="declaration" required style="width:auto;margin-right:8px">
+          I confirm that the information supplied is correct.
+        </label>
+      </div>
+
+      <button class="btn" type="submit">
+        SUBMIT BUSINESS REGISTRATION
+      </button>
+
+    </form>
+  `);
 }
 
 /* ---------- actions ---------- */
@@ -1815,6 +2075,98 @@ profile: async function (f) {
   S.profile = r.data || row; closeModal(); render(true); toast('Profile saved');
 },
 livechat: async function (f) {
+  var t = val(f, 'text'); if (!t || !LV) return;
+  if (LV.iMuted) { toast('The host muted your comments'); f.elements.text.value = ''; return; }
+  var n = Date.now(); if (LV.lc && n - LV.lc < 700) return; LV.lc = n;
+  var nm = myName();
+  addLiveMsg(nm, t, S.user && S.user.id); sendLive({ t: 'c', n: nm, m: t.slice(0, 140) });
+  f.elements.text.value = ''; f.elements.text.focus();
+},
+golive: async function (f) {
+  var title = (val(f, 'title') || 'Wantok Live').slice(0, 80);
+  var now = new Date().toISOString();
+  await q(db.from('lives').update({ status: 'ended', ended_at: now }).eq('host_id', S.user.id).eq('status', 'live'));
+  var r = await q(db.from('lives').insert({ host_id: S.user.id, host_name: myName(), title: title }).select().single());
+  if (r.error) { toast('Could not start live: ' + r.error.message); return; }
+  closeModal();
+  try { await openLive(r.data); }
+  catch (e) { await q(db.from('lives').update({ status: 'ended', ended_at: new Date().toISOString() }).eq('id', r.data.id)); throw e; }
+  await loadLives();
+},
+post: async function (f) {
+  var text = val(f, 'text'); if (!text && !tmpFile) { toast('Write something or add a photo or video'); return; }
+  var row = { title: (text || (isVideoFile(tmpFile) ? 'Video' : 'Photo')).split('\n')[0].slice(0, 100), body: text || null, kind: 'community', author_name: myName(), scope: val(f, 'scope') || 'png', province: loc().province, district: loc().district };
+  if (tmpFile) { if (isVideoFile(tmpFile)) { toast('Uploading video, please wait...'); row.media_url = await uploadVideo(tmpFile); row.media_type = 'video'; } else { row.media_url = await uploadPhoto(tmpFile); row.media_type = 'image'; } }
+  var r = await q(db.from('posts').insert(row).select().single());
+  if (r.error) { toast('Could not post: ' + r.error.message); return; }
+  S.posts.unshift(r.data); ui.feed = 'png'; closeModal(); tab('home'); toast('Posted!');
+},
+listing: async function (f) {
+  var t = val(f, 'title'); if (!t) return;
+  var pr = val(f, 'price'); pr = pr ? (/^k/i.test(pr) ? pr : 'K' + pr) : 'Ask';
+  var row = { title: t, price: pr, category: val(f, 'cat'), details: val(f, 'desc') || null, seller_name: myName(), province: loc().province, district: loc().district };
+  if (tmpFile) row.photo_url = await uploadPhoto(tmpFile);
+  var r = await q(db.from('listings').insert(row).select().single());
+  if (r.error) { toast('Could not list: ' + r.error.message); return; }
+  S.listings.unshift(r.data); ui.mq = ''; ui.mcat = 'All'; closeModal(); tab('market'); toast('Your listing is live');
+},
+job: async function (f) {
+  var row = { title: val(f, 'title'), employer: val(f, 'employer'), pay: val(f, 'pay'), location: val(f, 'loc'), job_type: val(f, 'cat'), contact: val(f, 'contact') || null, description: val(f, 'desc') || null, province: loc().province, town: loc().district };
+  var r = await q(db.from('jobs').insert(row).select().single());
+  if (r.error) { toast('Could not post: ' + r.error.message); return; }
+  S.jobs.unshift(r.data); ui.jtab = 'mine'; ui.jcat = 'All'; ui.jq = ''; closeModal(); tab('jobs'); toast('Submitted. It will appear after approval.');
+},
+apply: async function (f) {
+  var j = by(S.jobs, f.dataset.id); if (!j) return;
+  var r = await q(db.from('job_applications').insert({ job_id: j.id, applicant_name: myName(), contact: val(f, 'contact'), message: val(f, 'msg') }));
+  if (r.error) { toast(/duplicate|unique/i.test(r.error.message) ? 'You already applied for this job' : 'Could not send: ' + r.error.message); return; }
+  S.applied[j.id] = true; closeModal(); render(true); toast('Application sent!');
+},
+comment: async function (f) {
+  if (!S.user) return; var id = f.dataset.id, t = val(f, 'text'); if (!t) return;
+  var r = await q(db.from('post_comments').insert({ post_id: Number(id), user_id: S.user.id, body: t, author_name: myName() }));
+  if (r.error) { toast('Could not comment: ' + r.error.message); return; }
+  f.elements.text.value = ''; await paintComments(id); refreshPost(id);
+},
+story: async function (f) {
+  var r = await q(db.from('stories').insert({ author_name: myName(), body: val(f, 'text'), color: parseInt(f.elements.color.value, 10) || 0 }).select().single());
+  if (r.error) { toast('Could not share: ' + r.error.message); return; }
+  S.stories.unshift(r.data); closeModal(); render(true); toast('Story shared for 24 hours');
+},
+report: async function (f) {
+  var row = { category: val(f, 'cat'), location: val(f, 'loc'), description: val(f, 'desc'), reporter_name: myName() };
+  if (tmpFile) row.photo_url = await uploadPhoto(tmpFile);
+  var r = await q(db.from('reports').insert(row).select().single());
+  if (r.error) { toast('Could not submit: ' + r.error.message); return; }
+  S.reports.unshift(r.data); closeModal(); go('reports'); toast('Report submitted: ' + (r.data.ref || ''));
+},
+feedback: async function (f) {
+  var r = await q(db.from('feedback').insert({ topic: f.dataset.topic || 'App feedback', province: (S.profile && S.profile.province) || null, name: val(f, 'name') || null, contact: val(f, 'contact') || null, message: val(f, 'text') }));
+  if (r.error) { toast('Could not send: ' + r.error.message); return; }
+  closeModal(); toast('Sent. Tenkyu!');
+},
+talent: async function (f) {
+  var r = await q(db.from('talents').insert({ owner_name: myName(), title: val(f, 'title'), category: val(f, 'cat'), description: val(f, 'desc') || null }).select().single());
+  if (r.error) { toast('Could not enter: ' + r.error.message); return; }
+  S.talents.unshift(r.data); closeModal(); render(true); toast('You are in the showcase!');
+},
+business: async function (f) {
+  var g = function (n) { return val(f, n) || null; };
+  var yr = parseInt(val(f, 'year_established'), 10);
+  var r = await q(db.from('businesses').insert({
+    name: val(f, 'name'), trading_name: g('trading_name'), category: g('category'), business_type: g('business_type'),
+    ipa_number: g('ipa_number'), year_established: isNaN(yr) ? null : yr,
+    owner_name: g('owner_name'), contact_person: g('contact_person'), business_email: g('business_email'),
+    province: g('province'), district: g('district'), llg: g('llg'), town: g('town'), location: g('town'), village: g('village'), street: g('street'),
+    phone: g('phone'), whatsapp: g('whatsapp'), website: g('website'),
+    products: g('products'), services: g('services'), description: g('desc'),
+    hours: g('hours'), delivery: g('delivery'), payment: g('payment'),
+    email: (S.user && S.user.email) || null
+  }));
+  if (r.error) { toast('Could not submit: ' + r.error.message); return; }
+  closeModal(); toast('Submitted. We will review it soon.');
+},
+chat: async function (f) {
   var t = val(f, 'text'); if (!t || !LV) return;
   if (LV.iMuted) { toast('The host muted your comments'); f.elements.text.value = ''; return; }
   var n = Date.now(); if (LV.lc && n - LV.lc < 700) return; LV.lc = n;
