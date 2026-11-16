@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WANTOK PNG - Nav</title>
+<style>
+  :root {
+    --nav-bg: #ffffff;
+    --nav-border: #e5e8ee;
+    --nav-text: #0b1f3a;
+    --nav-h: 64px;
+    --top-h: 56px;
+    --c-home: #f5a800;
+    --c-market: #e11d2e;
+    --c-business: #f5a800;
+    --c-work: #f5a800;
+    --c-wantok: #1f9d4c;
+    --c-talent: #a63fc0;
+    --c-gov: #f5a800;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: Roboto, system-ui, sans-serif; background: #f4f7fb; color: var(--nav-text);
+         padding-top: calc(var(--top-h) + env(safe-area-inset-top));
+         padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px); }
+  .demo { padding: 24px 16px; }
+
+  /* ===== TOP BAR: logo left, menu + profile on the right ===== */
+  .wk-top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 70;
+    height: calc(var(--top-h) + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) 12px 0 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: #0b1f3a; color: #fff;
+  }
+  .wk-brand { font-weight: 800; letter-spacing: .5px; font-size: 18px; color: #f5a800; text-decoration: none; }
+  .wk-top-right { display: flex; align-items: center; gap: 10px; }
+  .wk-icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,.12); color: #fff; padding: 0;
+  }
+  .wk-icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor;
+                     stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-avatar {
+    width: 40px; height: 40px; border-radius: 50%; border: 2px solid #f5a800; cursor: pointer;
+    background: #1b3a66; color: #fff; font-weight: 700; font-size: 15px; padding: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wk-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* profile dropdown */
+  .wk-pop {
+    position: fixed; top: calc(var(--top-h) + env(safe-area-inset-top) + 6px); right: 12px; z-index: 80;
+    min-width: 200px; background: #fff; color: var(--nav-text); border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25); padding: 8px; display: none;
+  }
+  .wk-pop.open { display: block; }
+  .wk-pop a, .wk-pop button {
+    display: block; width: 100%; text-align: left; padding: 12px; border: 0; background: none;
+    font: inherit; font-size: 15px; color: inherit; text-decoration: none; border-radius: 10px; cursor: pointer;
+  }
+  .wk-pop a:active, .wk-pop button:active { background: #f1f4f9; }
+  .wk-pop .who { padding: 10px 12px 6px; font-weight: 700; }
+  .wk-pop .who small { display: block; font-weight: 400; color: #6a7688; }
+  .wk-pop hr { border: 0; border-top: 1px solid #e5e8ee; margin: 6px 0; }
+
+  /* slide-in menu (opened by the menu button) */
+  .wk-scrim { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 90; display: none; }
+  .wk-scrim.open { display: block; }
+  .wk-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(80vw, 320px); z-index: 100;
+    background: #fff; transform: translateX(100%); transition: transform .22s ease;
+    padding: calc(env(safe-area-inset-top) + 16px) 8px 16px; overflow-y: auto;
+  }
+  .wk-drawer.open { transform: none; }
+  .wk-drawer h3 { margin: 0 12px 10px; font-size: 13px; letter-spacing: .08em; color: #6a7688; text-transform: uppercase; }
+  .wk-drawer a { display: block; padding: 14px 12px; border-radius: 10px; color: var(--nav-text);
+                 text-decoration: none; font-size: 16px; }
+  .wk-drawer a:active { background: #f1f4f9; }
+
+  /* ===== BOTTOM NAV ===== */
+  .wk-nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    height: calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--nav-bg); border-top: 1px solid var(--nav-border);
+    box-shadow: 0 -4px 16px rgba(11,31,58,.08);
+  }
+  .wk-tab {
+    --c: var(--nav-text);
+    position: relative; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    min-width: 0; padding: 6px 1px;
+    color: var(--nav-text); text-decoration: none; background: none; border: 0; font: inherit;
+  }
+  .wk-tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor;
+                stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .wk-tab span { font-size: 10px; line-height: 1; font-weight: 500; max-width: 100%;
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .wk-tab[data-tab="home"]     { --c: var(--c-home); }
+  .wk-tab[data-tab="market"]   { --c: var(--c-market); }
+  .wk-tab[data-tab="business"] { --c: var(--c-business); }
+  .wk-tab[data-tab="work"]     { --c: var(--c-work); }
+  .wk-tab[data-tab="wantok"]   { --c: var(--c-wantok); }
+  .wk-tab[data-tab="talent"]   { --c: var(--c-talent); }
+  .wk-tab[data-tab="gov"]      { --c: var(--c-gov); }
+  .wk-tab.active { color: var(--c); }
+  .wk-tab.active span { font-weight: 700; }
+  .wk-tab.active svg { stroke-width: 2.4; }
+  .wk-tab.active::before { content: ""; position: absolute; top: 0; width: 26px; height: 3px;
+                           border-radius: 0 0 3px 3px; background: var(--c); }
+  .wk-tab:active { background: rgba(11,31,58,.06); }
+
+  .wk-fab {
+    position: fixed; right: 16px; z-index: 60;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);
+    width: 56px; height: 56px; border-radius: 50%; border: 0;
+    background: linear-gradient(135deg, #f5a800, #ee6a1a); color: #fff;
+    font-size: 32px; line-height: 1; box-shadow: 0 6px 16px rgba(0,0,0,.28);
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="wk-top">
+  <a class="wk-brand" href="index.html">WANTOK PNG</a>
+  <div class="wk-top-right">
+    <button class="wk-icon-btn" id="wkMenuBtn" aria-label="Menu">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <button class="wk-avatar" id="wkProfileBtn" aria-label="Profile menu">
+      <!-- put <img src="user-photo.jpg"> here when the user has a photo -->
+      <span id="wkInitial">W</span>
+    </button>
+  </div>
+</header>
+
+<!-- PROFILE DROPDOWN -->
+<div class="wk-pop" id="wkProfilePop">
+  <div class="who"><span id="wkName">Your name</span><small id="wkPhone">Signed in</small></div>
+  <hr>
+  <a href="profile.html">My profile</a>
+  <a href="mybusiness.html">My business</a>
+  <a href="settings.html">Settings</a>
+  <hr>
+  <button id="wkSignOut">Sign out</button>
+</div>
+
+<!-- SLIDE-IN MENU -->
+<div class="wk-scrim" id="wkScrim"></div>
+<aside class="wk-drawer" id="wkDrawer" aria-label="Menu">
+  <h3>Menu</h3>
+  <a href="messages.html">Messages</a>
+  <a href="notifications.html">Notifications</a>
+  <a href="saved.html">Saved</a>
+  <a href="mybusiness.html">My business</a>
+  <a href="help.html">Help &amp; support</a>
+  <a href="about.html">About WANTOK PNG</a>
+  <a href="privacy.html">Privacy policy</a>
+</aside>
+
+<div class="demo">
+  <h2>Home content goes here</h2>
+  <p>Menu and profile buttons are now in the top right corner.</p>
+</div>
+
+<button class="wk-fab" aria-label="Create">+</button>
+
+<!-- BOTTOM NAV: matches the home tiles -->
+<nav class="wk-nav" aria-label="Main">
+  <a class="wk-tab" href="index.html" data-tab="home">
+    <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+    <span>Home</span>
+  </a>
+  <a class="wk-tab" href="market.html" data-tab="market">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.5 12h11L21 7H6"/></svg>
+    <span>Market</span>
+  </a>
+  <a class="wk-tab" href="businesses.html" data-tab="business">
+    <svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v8h14v-8"/><path d="M10 20v-5h4v5"/></svg>
+    <span>Business</span>
+  </a>
+  <a class="wk-tab" href="jobs.html" data-tab="work">
+    <svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg>
+    <span>Work</span>
+  </a>
+  <a class="wk-tab" href="feed.html" data-tab="wantok">
+    <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-1a6 6 0 0 1 12 0v1"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14a5 5 0 0 1 6 5v1"/></svg>
+    <span>Wantok</span>
+  </a>
+  <a class="wk-tab" href="talent.html" data-tab="talent">
+    <svg viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>
+    <span>Talent</span>
+  </a>
+  <a class="wk-tab" href="gov.html" data-tab="gov">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-6 9 6"/><path d="M5 9v9M9.5 9v9M14.5 9v9M19 9v9"/><path d="M3 21h18"/></svg>
+    <span>Gov</span>
+  </a>
+</nav>
+
+<script>
+  // Highlight the current bottom tab
+  (function () {
+    var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    var tabs = document.querySelectorAll(".wk-tab"), matched = false;
+    tabs.forEach(function (t) {
+      if (t.getAttribute("href").toLowerCase() === page) { t.classList.add("active"); matched = true; }
+    });
+    if (!matched) tabs[0].classList.add("active");
+  })();
+
+  // Menu drawer + profile dropdown (only one open at a time)
+  var drawer = document.getElementById("wkDrawer"),
+      scrim  = document.getElementById("wkScrim"),
+      pop    = document.getElementById("wkProfilePop");
+
+  function closeAll() { drawer.classList.remove("open"); scrim.classList.remove("open"); pop.classList.remove("open"); }
+  document.getElementById("wkMenuBtn").onclick = function () {
+    var open = !drawer.classList.contains("open"); closeAll();
+    if (open) { drawer.classList.add("open"); scrim.classList.add("open"); }
+  };
+  document.getElementById("wkProfileBtn").onclick = function (e) {
+    e.stopPropagation(); var open = !pop.classList.contains("open"); closeAll();
+    if (open) pop.classList.add("open");
+  };
+  scrim.onclick = closeAll;
+  document.addEventListener("click", function (e) { if (!pop.contains(e.target)) pop.classList.remove("open"); });
+
+  // Call after login: setUser("Wallace", "70747090")
+  function setUser(name, phone) {
+    document.getElementById("wkName").textContent = name || "Your name";
+    document.getElementById("wkPhone").textContent = phone || "Signed in";
+    document.getElementById("wkInitial").textContent = (name || "W").charAt(0).toUpperCase();
+  }
+  document.getElementById("wkSignOut").onclick = function () {
+    // hook up supabase.auth.signOut() here, then:
+    location.href = "signin.html";
+  };
+</script>
+</body>
+</html>
