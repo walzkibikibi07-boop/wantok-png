@@ -1069,7 +1069,7 @@ function myName() {
 }
 function by(arr, id) { return arr.filter(function (x) { return String(x.id) === String(id); })[0]; }
 function colorOf(str) { var h = 0; str = String(str || ''); for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0; return AVC[h % AVC.length]; }
-function av(name, col, size) { return '<div class="av" style="background:' + (col || colorOf(name)) + ';width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * .42) + 'px">' + esc((name || '?').charAt(0).toUpperCase()) + '</div>'; }
+function av(name, col, size) { var ownPhoto = S.user && name === myName() ? ((S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || '') : ''; return '<div class="av" style="position:relative;overflow:hidden;background:' + (col || colorOf(name)) + ';width:' + size + 'px;height:' + size + 'px;font-size:' + Math.round(size * .42) + 'px">' + (ownPhoto ? '<img src="' + esc(ownPhoto) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : esc((name || '?').charAt(0).toUpperCase())) + '</div>'; }
 function needLogin(msg) { if (S.user) return false; authModal(msg || 'Sign in to continue'); return true; }
 function q(p) { return Promise.resolve(p).then(function (r) { if (r && r.error) { console.warn(r.error.message); } return r || { data: null, error: { message: 'No response' } }; }, function (e) { return { data: null, error: { message: (e && e.message) || 'Network error' } }; }); }
 function share(title, text) {
@@ -1902,7 +1902,9 @@ function authModal(msg) {
 function authMsg(m, bad) { var e = $('#authmsg'); if (e) { e.textContent = m; e.style.color = bad ? '#b42318' : '#17643a'; } else toast(m); }
 function profileModal(first) {
   var pr = S.profile || {};
-  sheet(first ? 'Welcome! Tell us about you' : 'Edit Profile', '<form data-form="profile"><div class="field"><label class="l">Your name</label><input name="name" required maxlength="60" value="' + esc(pr.full_name || '') + '"></div><div class="field"><label class="l">Province</label><select name="province"><option value="">Choose province</option>' + opts(PROVINCES, pr.province) + '</select></div><div class="field"><label class="l">District / town / village</label><input name="district" maxlength="60" value="' + esc(pr.district || '') + '" placeholder="e.g. Popondetta"></div><div class="field"><label class="l">Phone (optional)</label><input name="phone" type="tel" maxlength="20" value="' + esc(pr.phone || (S.user && S.user.phone) || '') + '"></div><button class="btn">Save</button></form>');
+  var photo = (pr.photo_url || (S.user && S.user.user_metadata && S.user.user_metadata.photo_url) || '');
+  var photoPreview = photo ? '<img src="' + esc(photo) + '" alt="Current profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e4e8ee">' : '<div class="av" style="width:76px;height:76px;height:76px;font-size:30px">' + esc((myName() || '?').charAt(0).toUpperCase()) + '</div>';
+  sheet(first ? 'Welcome! Tell us about you' : 'Edit Profile', '<form data-form="profile"><div class="field"><label class="l">Profile photo</label><div style="display:flex;align-items:center;gap:12px;margin:8px 0">' + photoPreview + '<label class="pick">📷 Choose profile photo<input type="file" accept="image/jpeg,image/png,image/webp,image/*" data-photo hidden></label></div><div class="pv"></div><small class="note">Choose a clear JPG or PNG photo (maximum 15 MB).</small></div><div class="field"><label class="l">Your name</label><input name="name" required maxlength="60" value="' + esc(pr.full_name || '') + '"></div><div class="field"><label class="l">Province</label><select name="province"><option value="">Choose province</option>' + opts(PROVINCES, pr.province) + '</select></div><div class="field"><label class="l">District / town / village</label><input name="district" maxlength="60" value="' + esc(pr.district || '') + '" placeholder="e.g. Popondetta"></div><div class="field"><label class="l">Phone (optional)</label><input name="phone" type="tel" maxlength="20" value="' + esc(pr.phone || (S.user && S.user.phone) || '') + '"></div><button class="btn">Save Profile</button></form>');
 }
 function newPostModal(kind) {
   if (needLogin('Sign in to post')) return;
@@ -2420,9 +2422,22 @@ emailAuth: async function (f) {
 },
 profile: async function (f) {
   var row = { user_id: S.user.id, full_name: val(f, 'name'), province: val(f, 'province') || null, district: val(f, 'district') || null, phone: val(f, 'phone') || null, email: S.user.email || (S.profile && S.profile.email) || null };
+  if (tmpFile) {
+    try {
+      toast('Uploading profile photo, please wait...');
+      row.photo_url = await uploadAvatar(tmpFile, 1);
+    } catch (e) {
+      toast('Profile photo upload failed: ' + ((e && e.message) || 'Please try again.'));
+      return;
+    }
+  } else {
+    row.photo_url = (S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || null;
+  }
   var r = await q(db.from('profiles').upsert(row, { onConflict: 'user_id' }).select().maybeSingle());
   if (r.error) { toast('Could not save: ' + r.error.message); return; }
-  S.profile = r.data || row; closeModal(); render(true); toast('Profile saved');
+  S.profile = r.data || row;
+  if (S.user.user_metadata) S.user.user_metadata.photo_url = row.photo_url;
+  tmpFile = null; closeModal(); render(true); toast('Profile saved');
 },
 livechat: async function (f) {
   var t = val(f, 'text'); if (!t || !LV) return;
