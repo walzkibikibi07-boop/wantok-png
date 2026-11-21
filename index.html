@@ -1226,8 +1226,12 @@ var MAX_PHOTO_BYTES = 15 * 1024 * 1024;
 var PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 function validatePhotoFile(file) {
   if (!file) throw new Error('Choose a photo first.');
-  if (PHOTO_TYPES.indexOf(String(file.type || '').toLowerCase()) === -1) {
-    throw new Error('Please choose a JPG, PNG or WebP photo.');
+  var type = String(file.type || '').toLowerCase();
+  var name = String(file.name || '').toLowerCase();
+  var allowedType = /^image\/(jpeg|jpg|png|webp|heic|heif|avif)$/.test(type);
+  var allowedName = /\.(jpe?g|png|webp|heic|heif|avif)$/i.test(name);
+  if (!allowedType && !allowedName) {
+    throw new Error('Please choose a JPG, PNG, WebP, HEIC or HEIF photo.');
   }
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error('Photo is too large. Maximum size is 15 MB.');
@@ -1238,15 +1242,14 @@ async function uploadPhoto(file) {
   if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
   validatePhotoFile(file);
 
-  var contentType = String(file.type || '').toLowerCase();
-  var extension = contentType === 'image/png' ? 'png'
-    : (contentType === 'image/webp' ? 'webp' : 'jpg');
+  // Normalize supported phone-photo formats to JPEG before sending to Storage.
+  // This avoids mismatched MIME types and reduces large camera images.
+  var prepared = await compress(file, 1600, 0.82);
+  if (!prepared || !prepared.size) throw new Error('Could not prepare this photo. Please try a JPG or PNG image.');
+  var contentType = 'image/jpeg';
   var path = S.user.id + '/' + Date.now() + '-' +
-    Math.random().toString(36).slice(2, 9) + '.' + extension;
+    Math.random().toString(36).slice(2, 9) + '.jpg';
 
-  // Use XMLHttpRequest for Storage uploads. Unlike a generic fetch rejection,
-  // XHR exposes HTTP status and the Storage response body on server errors.
-  // This also avoids depending on the SDK's internal fetch implementation.
   var sessionResult = await db.auth.getSession();
   if (sessionResult.error) throw new Error('Could not verify your sign-in: ' + sessionResult.error.message);
   var session = sessionResult.data && sessionResult.data.session;
@@ -1256,7 +1259,7 @@ async function uploadPhoto(file) {
   var endpoint = SB_URL.replace(/\/$/, '') + '/storage/v1/object/' +
     encodeURIComponent(BUCKET) + '/' + encodedPath;
 
-  var result = await new Promise(function (resolve, reject) {
+  await new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', endpoint, true);
     xhr.setRequestHeader('apikey', SB_KEY);
@@ -1271,12 +1274,12 @@ async function uploadPhoto(file) {
         ((payload && (payload.message || payload.error || payload.error_description)) || xhr.responseText || 'Unknown Storage error').toString().slice(0, 240)));
     };
     xhr.onerror = function () {
-      reject(new Error('The browser could not reach Supabase Storage. Check the connection, browser data saver/ad blocker, or network access, then retry.'));
+      reject(new Error('The browser could not reach Supabase Storage. Check your connection, then retry. If this continues, the browser or network may be blocking the upload request.'));
     };
     xhr.ontimeout = function () { reject(new Error('The photo upload timed out. Try a smaller photo or a more stable connection.')); };
     xhr.onabort = function () { reject(new Error('The photo upload was cancelled.')); };
     xhr.timeout = 120000;
-    xhr.send(file);
+    xhr.send(prepared);
   });
 
   var publicUrl = db.storage.from(BUCKET).getPublicUrl(path);
