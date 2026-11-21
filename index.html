@@ -1322,7 +1322,7 @@ document.addEventListener('change', function (e) {
   try {
     if (isVideoFile(f)) {
       if (f.size > 50 * 1024 * 1024) throw new Error('Video is too large. Maximum size is 50 MB.');
-      if (!/^video\\/(mp4|webm|quicktime)$/.test(f.type) && !/\\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name || '')) {
+      if (String(f.type || '').indexOf('video/') !== 0 && !/(mp4|mov|webm|m4v|3gp)$/i.test(f.name || '')) {
         throw new Error('Please choose an MP4, MOV or WebM video.');
       }
     } else {
