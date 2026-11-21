@@ -222,8 +222,6 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .post-acts{display:flex;justify-content:space-around;padding:4px 6px 8px;border-top:1px solid #edf0f4;margin:6px 8px 0}
 .post-acts button{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;padding:8px 8px;border-radius:10px;color:#444}
 .post-acts button.liked{color:var(--red)}.post-acts button.liked svg{fill:var(--red)}
-.post-acts button.tipped{color:var(--green)}
-
 /* sub screens */
 .sh{position:sticky;top:0;z-index:10;background:var(--bg);display:flex;align-items:center;gap:10px;padding:14px 12px 10px}
 .sh h2{font-size:20px;font-weight:800;flex:1;min-width:0}
@@ -1042,7 +1040,7 @@ var TP = {
 'Show Your Skills': 'Soim Skil Bilong Yu', 'Services • Notices • Direct to Leaders': 'Sevis • Nius • Stret long Lida',
 "What's happening in your village?": 'Wanem samting i kamap long ples bilong yu?', 'Photo': 'Poto', 'Video': 'Vidio', 'Go Live': 'Go Laiv',
 'Your Wantok Circles': 'Ol Wantok Grup Bilong Yu', 'Trending in PNG': 'Hat Nau long PNG', 'Near You': 'Klostu long Yu', 'Community Feed': 'Nius Bilong Komuniti',
-'See All': 'Lukim Olgeta', 'My District': 'Distrik Bilong Mi', 'My Province': 'Provins Bilong Mi', 'All PNG': 'Olgeta PNG', 'Like': 'Laikim', 'Comment': 'Tok', 'Share': 'Serim', 'Tip K1': 'Givim K1',
+'See All': 'Lukim Olgeta', 'My District': 'Distrik Bilong Mi', 'My Province': 'Provins Bilong Mi', 'All PNG': 'Olgeta PNG', 'Vote': 'Votim', 'Comment': 'Tok', 'Share': 'Serim',
 'Home': 'Haus', 'Market': 'Maket', 'Jobs': 'Wok', 'Gov Connect': 'Gavman', 'Messages': 'Tok', 'More': 'Moa', 'Sell': 'Salim', 'Notifications': 'Ol Nius', 'Profile': 'Profael',
 'Report an Issue': 'Ripot Hevi', 'Public Notices': 'Ol Nius', 'Services Guide': 'Gaid Bilong Sevis', 'Contact Offices': 'Toktok long Opis', 'My Reports': 'Ol Ripot', 'Feedback': 'Tingting',
 'Talent': 'Talen', 'Wantok Circles': 'Ol Wantok Grup', 'Language': 'Tok Ples', 'Data Saver': 'Seivim Data', 'Saved Items': 'Ol Samting Mi Sevim', 'My Posts & Listings': 'Ol Samting Bilong Mi'
@@ -1658,8 +1656,8 @@ function postHtml(p) {
   var official = /^gov connect/i.test(p.author_name || '');
   return '<div class="post' + (official ? ' official' : '') + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div><button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
     + (p.body || p.title ? '<p>' + esc(p.body || p.title) + '</p>' : '') + media
-    + '<div class="post-stats"><span>❤️ ' + r.n + '</span><span>' + cc + ' comments</span></div>'
-    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '">' + IC.heart + T('Like') + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button><button data-a="tip" data-id="' + p.id + '">💰 ' + T('Tip K1') + '</button></div></div>';
+    + '<div class="post-stats"><span>🗳️ ' + r.n + ' votes</span><span>' + cc + ' comments</span></div>'
+    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '">🗳️ ' + T('Vote') + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
 }
 function feedPosts() {
   var pr = S.profile || {}, t = ui.feed;
@@ -2327,16 +2325,16 @@ toggleLang: function () { P.lang = P.lang === 'tp' ? 'en' : 'tp'; saveP(); rende
 toggleSaver: function () { P.saver = !P.saver; saveP(); render(true); toast(P.saver ? 'Data Saver on: photos hidden' : 'Data Saver off'); },
 newPost: function () { closeModal(); newPostModal(); },
 like: async function (el) {
-  if (needLogin('Sign in to like posts')) return;
+  if (needLogin('Sign in to vote on posts')) return;
   var p = by(S.posts, el.dataset.id); if (!p) return;
   var r = S.react[p.id] || (S.react[p.id] = { n: 0, mine: false }), was = r.mine;
   r.mine = !was; r.n += was ? -1 : 1; refreshPost(p.id);
   var res = was ? await q(db.from('post_reactions').delete().eq('post_id', p.id).eq('user_id', S.user.id)) : await q(db.from('post_reactions').upsert({ post_id: p.id, user_id: S.user.id, reaction: 'like' }));
-  if (res.error) { r.mine = was; r.n += was ? 1 : -1; refreshPost(p.id); toast('Could not save your like'); }
+  if (res.error) { r.mine = was; r.n += was ? 1 : -1; refreshPost(p.id); toast('Could not save your vote'); }
 },
 comment: function (el) { commentsModal(el.dataset.id); },
 sharePost: function (el) { var p = by(S.posts, el.dataset.id); if (p) share('WANTOK PNG', (p.author_name || '') + ': ' + (p.body || p.title || '')); },
-tip: function () { toast('Tips need a payment partner. Coming soon.'); },
+
 postMenu: function (el) { var p = by(S.posts, el.dataset.id); if (!p) return; var own = S.user && p.author === S.user.id; menuSheet([['sharePost', p.id, '↗ Share post'], ['copyPost', p.id, '📋 Copy text'], ['reportPost', p.id, '🚩 Report post']].concat(own ? [['delPost', p.id, '🗑 Delete post', true]] : [])); },
 copyPost: function (el) { var p = by(S.posts, el.dataset.id); closeModal(); if (p && navigator.clipboard) navigator.clipboard.writeText(p.body || p.title || '').then(function () { toast('Copied'); }, function () { toast('Copy not available'); }); else toast('Copy not available'); },
 reportPost: async function (el) { closeModal(); await q(db.from('feedback').insert({ topic: 'Reported post', name: S.user ? myName() : null, message: 'Post id ' + el.dataset.id + ' was reported as inappropriate.' })); toast('Reported. Thank you for keeping WANTOK safe.'); },
