@@ -1237,11 +1237,26 @@ function validatePhotoFile(file) {
 async function uploadPhoto(file) {
   if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
   validatePhotoFile(file);
-  var blob = await compress(file, 1200, 0.82);
-  if (!blob || !blob.size) throw new Error('Could not prepare this photo. Please choose another image.');
-  var path = S.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 9) + '.jpg';
+  // Compression is best-effort only. Some Android gallery images preview
+  // correctly but cannot be decoded by canvas; upload the original supported
+  // image instead of blocking the member's post.
+  var blob = file;
+  var contentType = String(file.type || '').toLowerCase();
+  var extension = contentType === 'image/png' ? 'png' : (contentType === 'image/webp' ? 'webp' : 'jpg');
+  try {
+    var compressed = await compress(file, 1200, 0.82);
+    if (compressed && compressed.size) {
+      blob = compressed;
+      contentType = 'image/jpeg';
+      extension = 'jpg';
+    }
+  } catch (compressionError) {
+    console.warn('WANTOK PNG photo compression skipped; uploading original image:', compressionError);
+  }
+  if (!blob || !blob.size) throw new Error('The selected photo is empty. Please choose another image.');
+  var path = S.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 9) + '.' + extension;
   var r = await db.storage.from(BUCKET).upload(path, blob, {
-    contentType: 'image/jpeg',
+    contentType: contentType,
     cacheControl: '3600',
     upsert: false
   });
