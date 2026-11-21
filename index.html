@@ -2422,21 +2422,21 @@ emailAuth: async function (f) {
 },
 profile: async function (f) {
   var row = { user_id: S.user.id, full_name: val(f, 'name'), province: val(f, 'province') || null, district: val(f, 'district') || null, phone: val(f, 'phone') || null, email: S.user.email || (S.profile && S.profile.email) || null };
+  var photoUrl = (S.user.user_metadata && S.user.user_metadata.photo_url) || null;
   if (tmpFile) {
     try {
       toast('Uploading profile photo, please wait...');
-      row.photo_url = await uploadAvatar(tmpFile, 1);
+      photoUrl = await uploadAvatar(tmpFile, 1);
     } catch (e) {
       toast('Profile photo upload failed: ' + ((e && e.message) || 'Please try again.'));
       return;
     }
-  } else {
-    row.photo_url = (S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || null;
   }
   var r = await q(db.from('profiles').upsert(row, { onConflict: 'user_id' }).select().maybeSingle());
   if (r.error) { toast('Could not save: ' + r.error.message); return; }
   S.profile = r.data || row;
-  if (S.user.user_metadata) S.user.user_metadata.photo_url = row.photo_url;
+  if (!S.user.user_metadata) S.user.user_metadata = {};
+  S.user.user_metadata.photo_url = photoUrl;
   tmpFile = null; closeModal(); render(true); toast('Profile saved');
 },
 livechat: async function (f) {
