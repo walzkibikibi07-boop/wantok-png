@@ -1258,7 +1258,7 @@ async function uploadAvatar(file, zoom) {
     .from(BUCKET)
     .upload(path, blob, {
       contentType: 'image/jpeg',
-      upsert: true
+      upsert: false
     });
 
   if (result.error) throw result.error;
