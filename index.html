@@ -1191,12 +1191,37 @@ function compress(file, max, quality) {
     rd.readAsDataURL(file);
   });
 }
+// Photo uploads: validate before reading/compressing, then store in the
+// signed-in member's own folder in the public post-media bucket.
+var MAX_PHOTO_BYTES = 15 * 1024 * 1024;
+var PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+function validatePhotoFile(file) {
+  if (!file) throw new Error('Choose a photo first.');
+  if (PHOTO_TYPES.indexOf(String(file.type || '').toLowerCase()) === -1) {
+    throw new Error('Please choose a JPG, PNG or WebP photo.');
+  }
+  if (file.size > MAX_PHOTO_BYTES) {
+    throw new Error('Photo is too large. Maximum size is 15 MB.');
+  }
+  return true;
+}
 async function uploadPhoto(file) {
-  var blob = await compress(file, 1000, 0.75);
-  var path = S.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.jpg';
-  var r = await db.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg', upsert: false });
-  if (r.error) throw r.error;
-  return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+  if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
+  validatePhotoFile(file);
+  var blob = await compress(file, 1200, 0.82);
+  if (!blob || !blob.size) throw new Error('Could not prepare this photo. Please choose another image.');
+  var path = S.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 9) + '.jpg';
+  var r = await db.storage.from(BUCKET).upload(path, blob, {
+    contentType: 'image/jpeg',
+    cacheControl: '3600',
+    upsert: false
+  });
+  if (r.error) throw new Error('Photo upload failed: ' + r.error.message);
+  var publicUrl = db.storage.from(BUCKET).getPublicUrl(path);
+  if (!publicUrl || !publicUrl.data || !publicUrl.data.publicUrl) {
+    throw new Error('Photo uploaded, but its viewing link could not be created.');
+  }
+  return publicUrl.data.publicUrl;
 }
   // WANTOK PNG PROFILE PHOTO CROPPING
 var authPhotoFile = null;
@@ -1289,11 +1314,35 @@ async function uploadVideo(file) {
 }
 document.addEventListener('change', function (e) {
   var t = e.target;
-  if (t.matches && t.matches('input[type=file][data-photo]')) {
-    var f = t.files && t.files[0]; if (!f) return;
+  if (!t.matches || !t.matches('input[type=file][data-photo]')) return;
+  var f = t.files && t.files[0];
+  if (!f) { tmpFile = null; return; }
+  var form = t.closest('form');
+  var pv = form && form.querySelector('.pv');
+  try {
+    if (isVideoFile(f)) {
+      if (f.size > 50 * 1024 * 1024) throw new Error('Video is too large. Maximum size is 50 MB.');
+      if (!/^video\\/(mp4|webm|quicktime)$/.test(f.type) && !/\\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name || '')) {
+        throw new Error('Please choose an MP4, MOV or WebM video.');
+      }
+    } else {
+      validatePhotoFile(f);
+    }
     tmpFile = f;
-    var pv = t.closest('form').querySelector('.pv');
-    if (pv) { var u = URL.createObjectURL(f); pv.innerHTML = isVideoFile(f) ? '<video src="' + u + '" controls playsinline muted preload="metadata"></video>' : '<img src="' + u + '" alt="">'; pv.style.display = 'block'; }
+    if (pv) {
+      if (t.dataset.previewUrl) URL.revokeObjectURL(t.dataset.previewUrl);
+      var u = URL.createObjectURL(f);
+      t.dataset.previewUrl = u;
+      pv.innerHTML = isVideoFile(f)
+        ? '<video src="' + u + '" controls playsinline muted preload="metadata"></video>'
+        : '<img src="' + u + '" alt="Selected photo preview">';
+      pv.style.display = 'block';
+    }
+  } catch (err) {
+    tmpFile = null;
+    t.value = '';
+    if (pv) { pv.innerHTML = ''; pv.style.display = 'none'; }
+    toast(err.message || 'This file cannot be uploaded.');
   }
 });
 
@@ -2332,7 +2381,10 @@ golive: async function (f) {
 post: async function (f) {
   var text = val(f, 'text'); if (!text && !tmpFile) { toast('Write something or add a photo or video'); return; }
   var row = { title: (text || (isVideoFile(tmpFile) ? 'Video' : 'Photo')).split('\n')[0].slice(0, 100), body: text || null, kind: 'community', author_name: myName(), scope: val(f, 'scope') || 'png', province: loc().province, district: loc().district };
-  if (tmpFile) { if (isVideoFile(tmpFile)) { toast('Uploading video, please wait...'); row.media_url = await uploadVideo(tmpFile); row.media_type = 'video'; } else { row.media_url = await uploadPhoto(tmpFile); row.media_type = 'image'; } }
+  if (tmpFile) {
+    if (isVideoFile(tmpFile)) { toast('Uploading video, please wait...'); row.media_url = await uploadVideo(tmpFile); row.media_type = 'video'; }
+    else { toast('Uploading photo, please wait...'); row.media_url = await uploadPhoto(tmpFile); row.media_type = 'image'; }
+  }
   var r = await q(db.from('posts').insert(row).select().single());
   if (r.error) { toast('Could not post: ' + r.error.message); return; }
   S.posts.unshift(r.data); ui.feed = 'png'; closeModal(); tab('home'); toast('Posted!');
@@ -2341,7 +2393,7 @@ listing: async function (f) {
   var t = val(f, 'title'); if (!t) return;
   var pr = val(f, 'price'); pr = pr ? (/^k/i.test(pr) ? pr : 'K' + pr) : 'Ask';
   var row = { title: t, price: pr, category: val(f, 'cat'), details: val(f, 'desc') || null, seller_name: myName(), province: loc().province, district: loc().district };
-  if (tmpFile) row.photo_url = await uploadPhoto(tmpFile);
+  if (tmpFile) { toast('Uploading photo, please wait...'); row.photo_url = await uploadPhoto(tmpFile); }
   var r = await q(db.from('listings').insert(row).select().single());
   if (r.error) { toast('Could not list: ' + r.error.message); return; }
   S.listings.unshift(r.data); ui.mq = ''; ui.mcat = 'All'; closeModal(); tab('market'); toast('Your listing is live');
