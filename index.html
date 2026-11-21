@@ -1237,30 +1237,23 @@ function validatePhotoFile(file) {
 async function uploadPhoto(file) {
   if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
   validatePhotoFile(file);
-  // Compression is best-effort only. Some Android gallery images preview
-  // correctly but cannot be decoded by canvas; upload the original supported
-  // image instead of blocking the member's post.
-  var blob = file;
+
+  // Upload the original image directly. Do not decode it or pass it through
+  // canvas/createImageBitmap: Android gallery photos can preview correctly
+  // while browser decoders fail during a second processing step.
   var contentType = String(file.type || '').toLowerCase();
-  var extension = contentType === 'image/png' ? 'png' : (contentType === 'image/webp' ? 'webp' : 'jpg');
-  try {
-    var compressed = await compress(file, 1200, 0.82);
-    if (compressed && compressed.size) {
-      blob = compressed;
-      contentType = 'image/jpeg';
-      extension = 'jpg';
-    }
-  } catch (compressionError) {
-    console.warn('WANTOK PNG photo compression skipped; uploading original image:', compressionError);
-  }
-  if (!blob || !blob.size) throw new Error('The selected photo is empty. Please choose another image.');
-  var path = S.user.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 9) + '.' + extension;
-  var r = await db.storage.from(BUCKET).upload(path, blob, {
+  var extension = contentType === 'image/png' ? 'png'
+    : (contentType === 'image/webp' ? 'webp' : 'jpg');
+  var path = S.user.id + '/' + Date.now() + '-' +
+    Math.random().toString(36).slice(2, 9) + '.' + extension;
+
+  var r = await db.storage.from(BUCKET).upload(path, file, {
     contentType: contentType,
     cacheControl: '3600',
     upsert: false
   });
   if (r.error) throw new Error('Photo upload failed: ' + r.error.message);
+
   var publicUrl = db.storage.from(BUCKET).getPublicUrl(path);
   if (!publicUrl || !publicUrl.data || !publicUrl.data.publicUrl) {
     throw new Error('Photo uploaded, but its viewing link could not be created.');
