@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d1b2e">
 <title>WANTOK PNG</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <style>
 *{box-sizing:border-box}
 html,body{max-width:100%;overflow-x:hidden}
@@ -1377,10 +1379,53 @@ async function uploadVideo(file) {
   if (r.error) throw r.error;
   return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
+var profileCropper = null, profileCropUrl = null;
+function openProfileCrop(file, form) {
+  if (typeof Cropper === 'undefined') { toast('Photo crop tool is still loading. Please try again.'); return; }
+  if (profileCropper) { profileCropper.destroy(); profileCropper = null; }
+  if (profileCropUrl) URL.revokeObjectURL(profileCropUrl);
+  profileCropUrl = URL.createObjectURL(file);
+  var layer = document.createElement('div');
+  layer.id = 'wantokCropLayer';
+  layer.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(5,15,30,.96);display:flex;flex-direction:column;padding:18px 14px calc(18px + env(safe-area-inset-bottom));color:#fff';
+  layer.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><b style="font-size:19px">Crop profile photo</b><button type="button" id="cropCancel" style="color:#fff;font-size:16px;padding:8px">Cancel</button></div><div style="flex:1;min-height:180px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111;border-radius:14px"><img id="wantokCropImage" src="' + profileCropUrl + '" alt="Crop your profile photo" style="display:block;max-width:100%;max-height:100%"></div><p style="font-size:13px;opacity:.85;margin:12px 2px">Move the photo to position it. Pinch to zoom, or use the controls below.</p><div style="display:flex;gap:10px;margin-bottom:12px"><button type="button" id="cropZoomOut" class="btn alt" style="flex:1;background:#26364b;color:#fff">− Zoom</button><button type="button" id="cropZoomIn" class="btn alt" style="flex:1;background:#26364b;color:#fff">+ Zoom</button><button type="button" id="cropRotate" class="btn alt" style="flex:1;background:#26364b;color:#fff">↻ Rotate</button></div><button type="button" id="cropUse" class="btn">Use this photo</button>';
+  document.body.appendChild(layer);
+  var img = layer.querySelector('#wantokCropImage');
+  function clean() {
+    if (profileCropper) { profileCropper.destroy(); profileCropper = null; }
+    if (profileCropUrl) { URL.revokeObjectURL(profileCropUrl); profileCropUrl = null; }
+    layer.remove();
+  }
+  layer.querySelector('#cropCancel').onclick = clean;
+  img.onload = function () {
+    profileCropper = new Cropper(img, { aspectRatio:1, viewMode:1, dragMode:'move', autoCropArea:.88, responsive:true, background:false, guides:true, center:true, movable:true, zoomable:true, rotatable:true, scalable:false, cropBoxMovable:false, cropBoxResizable:false, toggleDragModeOnDblclick:false });
+  };
+  layer.querySelector('#cropZoomIn').onclick = function(){ if(profileCropper) profileCropper.zoom(.1); };
+  layer.querySelector('#cropZoomOut').onclick = function(){ if(profileCropper) profileCropper.zoom(-.1); };
+  layer.querySelector('#cropRotate').onclick = function(){ if(profileCropper) profileCropper.rotate(90); };
+  layer.querySelector('#cropUse').onclick = function(){
+    if(!profileCropper) return;
+    var button=this; button.disabled=true; button.textContent='Preparing photo…';
+    profileCropper.getCroppedCanvas({width:700,height:700,imageSmoothingEnabled:true,imageSmoothingQuality:'high'}).toBlob(function(blob){
+      if(!blob){button.disabled=false;button.textContent='Use this photo';toast('Could not crop this photo. Please try another image.');return;}
+      tmpFile = new File([blob], 'wantok-profile-cropped.jpg', {type:'image/jpeg',lastModified:Date.now()});
+      var pv=form && form.querySelector('.pv');
+      if(pv){var u=URL.createObjectURL(tmpFile);pv.innerHTML='<img src="'+u+'" alt="Cropped profile photo preview" style="width:96px;height:96px;border-radius:50%;object-fit:cover">';pv.style.display='block';}
+      clean();
+      toast('Crop ready. Tap Save Profile to upload.');
+    },'image/jpeg',.9);
+  };
+}
 document.addEventListener('change', function (e) {
   var t = e.target;
   if (!t.matches || !t.matches('input[type=file][data-photo]')) return;
   var f = t.files && t.files[0];
+  if (t.hasAttribute('data-profile-photo')) {
+    if (!f) return;
+    try { validatePhotoFile(f); openProfileCrop(f, t.closest('form')); }
+    catch(err) { t.value=''; toast(err.message || 'This photo cannot be used.'); }
+    return;
+  }
   if (!f) { tmpFile = null; return; }
   var form = t.closest('form');
   var pv = form && form.querySelector('.pv');
@@ -1904,7 +1949,7 @@ function profileModal(first) {
   var pr = S.profile || {};
   var photo = (pr.photo_url || (S.user && S.user.user_metadata && S.user.user_metadata.photo_url) || '');
   var photoPreview = photo ? '<img src="' + esc(photo) + '" alt="Current profile photo" style="width:76px;height:76px;border-radius:50%;object-fit:cover;border:2px solid #e4e8ee">' : '<div class="av" style="width:76px;height:76px;height:76px;font-size:30px">' + esc((myName() || '?').charAt(0).toUpperCase()) + '</div>';
-  sheet(first ? 'Welcome! Tell us about you' : 'Edit Profile', '<form data-form="profile"><div class="field"><label class="l">Profile photo</label><div style="display:flex;align-items:center;gap:12px;margin:8px 0">' + photoPreview + '<label class="pick">📷 Choose profile photo<input type="file" accept="image/jpeg,image/png,image/webp,image/*" data-photo hidden></label></div><div class="pv"></div><small class="note">Choose a clear JPG or PNG photo (maximum 15 MB).</small></div><div class="field"><label class="l">Your name</label><input name="name" required maxlength="60" value="' + esc(pr.full_name || '') + '"></div><div class="field"><label class="l">Province</label><select name="province"><option value="">Choose province</option>' + opts(PROVINCES, pr.province) + '</select></div><div class="field"><label class="l">District / town / village</label><input name="district" maxlength="60" value="' + esc(pr.district || '') + '" placeholder="e.g. Popondetta"></div><div class="field"><label class="l">Phone (optional)</label><input name="phone" type="tel" maxlength="20" value="' + esc(pr.phone || (S.user && S.user.phone) || '') + '"></div><button class="btn">Save Profile</button></form>');
+  sheet(first ? 'Welcome! Tell us about you' : 'Edit Profile', '<form data-form="profile"><div class="field"><label class="l">Profile photo</label><div style="display:flex;align-items:center;gap:12px;margin:8px 0">' + photoPreview + '<label class="pick">📷 Choose profile photo<input type="file" accept="image/jpeg,image/png,image/webp,image/*" data-photo data-profile-photo hidden></label></div><div class="pv"></div><small class="note">Choose a clear JPG or PNG photo (maximum 15 MB).</small></div><div class="field"><label class="l">Your name</label><input name="name" required maxlength="60" value="' + esc(pr.full_name || '') + '"></div><div class="field"><label class="l">Province</label><select name="province"><option value="">Choose province</option>' + opts(PROVINCES, pr.province) + '</select></div><div class="field"><label class="l">District / town / village</label><input name="district" maxlength="60" value="' + esc(pr.district || '') + '" placeholder="e.g. Popondetta"></div><div class="field"><label class="l">Phone (optional)</label><input name="phone" type="tel" maxlength="20" value="' + esc(pr.phone || (S.user && S.user.phone) || '') + '"></div><button class="btn">Save Profile</button></form>');
 }
 function newPostModal(kind) {
   if (needLogin('Sign in to post')) return;
