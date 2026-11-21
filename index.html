@@ -1253,7 +1253,7 @@ async function uploadPhoto(file) {
   if (!session || !session.access_token) throw new Error('Your sign-in has expired. Please sign in again.');
 
   var encodedPath = path.split('/').map(function (part) { return encodeURIComponent(part); }).join('/');
-  var endpoint = SB_URL.replace(/\\/$/, '') + '/storage/v1/object/' +
+  var endpoint = SB_URL.replace(/\/$/, '') + '/storage/v1/object/' +
     encodeURIComponent(BUCKET) + '/' + encodedPath;
 
   var result = await new Promise(function (resolve, reject) {
