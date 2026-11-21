@@ -1238,21 +1238,46 @@ async function uploadPhoto(file) {
   if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
   validatePhotoFile(file);
 
-  // Upload the original image directly. Do not decode it or pass it through
-  // canvas/createImageBitmap: Android gallery photos can preview correctly
-  // while browser decoders fail during a second processing step.
   var contentType = String(file.type || '').toLowerCase();
   var extension = contentType === 'image/png' ? 'png'
     : (contentType === 'image/webp' ? 'webp' : 'jpg');
   var path = S.user.id + '/' + Date.now() + '-' +
     Math.random().toString(36).slice(2, 9) + '.' + extension;
 
-  var r = await db.storage.from(BUCKET).upload(path, file, {
-    contentType: contentType,
-    cacheControl: '3600',
-    upsert: false
+  // Use XMLHttpRequest for Storage uploads. Unlike a generic fetch rejection,
+  // XHR exposes HTTP status and the Storage response body on server errors.
+  // This also avoids depending on the SDK's internal fetch implementation.
+  var sessionResult = await db.auth.getSession();
+  if (sessionResult.error) throw new Error('Could not verify your sign-in: ' + sessionResult.error.message);
+  var session = sessionResult.data && sessionResult.data.session;
+  if (!session || !session.access_token) throw new Error('Your sign-in has expired. Please sign in again.');
+
+  var encodedPath = path.split('/').map(function (part) { return encodeURIComponent(part); }).join('/');
+  var endpoint = SB_URL.replace(/\\/$/, '') + '/storage/v1/object/' +
+    encodeURIComponent(BUCKET) + '/' + encodedPath;
+
+  var result = await new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint, true);
+    xhr.setRequestHeader('apikey', SB_KEY);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
+    xhr.setRequestHeader('Content-Type', contentType);
+    xhr.setRequestHeader('x-upsert', 'false');
+    xhr.onload = function () {
+      var payload = null;
+      try { payload = JSON.parse(xhr.responseText || '{}'); } catch (e) {}
+      if (xhr.status >= 200 && xhr.status < 300) resolve(payload || {});
+      else reject(new Error('Storage rejected the photo (HTTP ' + xhr.status + '): ' +
+        ((payload && (payload.message || payload.error || payload.error_description)) || xhr.responseText || 'Unknown Storage error').toString().slice(0, 240)));
+    };
+    xhr.onerror = function () {
+      reject(new Error('The browser could not reach Supabase Storage. Check the connection, browser data saver/ad blocker, or network access, then retry.'));
+    };
+    xhr.ontimeout = function () { reject(new Error('The photo upload timed out. Try a smaller photo or a more stable connection.')); };
+    xhr.onabort = function () { reject(new Error('The photo upload was cancelled.')); };
+    xhr.timeout = 120000;
+    xhr.send(file);
   });
-  if (r.error) throw new Error('Photo upload failed: ' + r.error.message);
 
   var publicUrl = db.storage.from(BUCKET).getPublicUrl(path);
   if (!publicUrl || !publicUrl.data || !publicUrl.data.publicUrl) {
