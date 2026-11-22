@@ -384,7 +384,7 @@ body{font-size:16px;line-height:1.5}
 button,input,select,textarea{font-size:14px}
 input,select,textarea{font-size:16px}
 .brand h1{font-size:26px;line-height:1.15}
-.brand p{font-family:Impact,'Arial Black',Haettenschweiler,sans-serif;font-size:19px;line-height:1.05;font-weight:900;letter-spacing:.7px;text-transform:uppercase;color:#f5b800;text-shadow:1px 2px 0 #14532d,0 2px 7px rgba(0,0,0,.22);margin-top:5px;white-space:nowrap}
+.brand p{font-family:Impact,'Arial Black',Haettenschweiler,sans-serif;font-size:21px;line-height:1.05;font-weight:900;font-style:italic;letter-spacing:1px;text-transform:none;color:#f5b800;text-shadow:1px 2px 0 #14532d,0 3px 8px rgba(0,0,0,.28);margin-top:5px;white-space:nowrap}
 .sec h2,.sh h2,.h3{font-size:18px;line-height:1.3}
 .tile h3{font-size:20px;line-height:1.2}
 .tile p,.alert p,.desc,.note,.gnote{font-size:14px;line-height:1.5}
@@ -1710,7 +1710,7 @@ SCREENS.home = function () {
   trending = trendingWithVideos(trending);
   var seen = P.viewed;
   var profilePhoto = S.user ? ((S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || '') : '';
-  return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('Strongim Yumi Yet') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + (profilePhoto ? '<img src="' + esc(profilePhoto) + '" alt="Your profile photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : IC.user) + '</button></div></div>'
+  return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('strongim yumi yet') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + (profilePhoto ? '<img src="' + esc(profilePhoto) + '" alt="Your profile photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : IC.user) + '</button></div></div>'
   + '<div class="ctrl"><button class="chip" data-a="toggleLang">🌐 ' + (P.lang === 'tp' ? 'Tok Pisin' : 'English') + '</button><button class="chip intel-top-btn" data-a="go" data-v="intelligence">🇵🇬 National Intelligence Services</button></div>'
   + guestCard('Sign in to post, message, apply and report.')
   + (n ? '<div class="alert"><span class="ai">📢</span><div><b>Community Alert <span class="vt">✓</span></b><p>' + esc(n.title) + (n.body ? ': ' + esc(n.body) : '') + '</p><a data-a="go" data-v="notices">Details ›</a></div></div>' : '')
