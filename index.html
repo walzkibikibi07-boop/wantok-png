@@ -1582,7 +1582,35 @@ async function openLive(row) {
     room.on(L.RoomEvent.Disconnected, function () {
       if (LV && LV.room === room) { if (!LV.host) toast('The live has ended'); closeLive(); }
     });
-    await room.connect(res.data.url, res.data.token);
+    if (host) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('This browser cannot access the camera. Open WANTOK PNG in Chrome and allow camera and microphone access.');
+      }
+      var permissionStream;
+      try {
+        permissionStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        permissionStream.getTracks().forEach(function (track) { track.stop(); });
+      } catch (permissionError) {
+        if (permissionStream) permissionStream.getTracks().forEach(function (track) { track.stop(); });
+        throw new Error('Camera or microphone permission was blocked. In Chrome site settings, allow Camera and Microphone for WANTOK PNG, then try Go Live again.');
+      }
+    }
+    var connectTimer;
+    try {
+      await Promise.race([
+        room.connect(res.data.url, res.data.token),
+        new Promise(function (_, reject) {
+          connectTimer = setTimeout(function () {
+            reject(new Error('Live connection timed out after 20 seconds. Check your internet connection and LiveKit server URL, then try again.'));
+          }, 20000);
+        })
+      ]);
+    } catch (connectError) {
+      try { room.disconnect(); } catch (disconnectError) { }
+      throw connectError;
+    } finally {
+      if (connectTimer) clearTimeout(connectTimer);
+    }
     liveCount();
     var bar = document.getElementById('lvbar');
     if (host) {
