@@ -2007,15 +2007,25 @@ async function paintComments(id) {
   var c = r.data || []; S.ccount[id] = c.length;
   box.innerHTML = c.length ? c.map(function (x) { return '<div class="cm">' + av(x.author_name, null, 34) + '<div><b>' + esc(x.author_name || 'Member') + '</b>' + esc(x.body) + '</div></div>'; }).join('') : '<div class="empty" style="padding:14px">No comments yet.</div>';
 }
+function openShortFeed(title) {
+  var clips = (S.stories || []).filter(function (x) { return x.media_type === 'video' && x.media_url; }).concat((S.posts || []).filter(function (x) { return x.media_type === 'video' && x.media_url; }));
+  if (!clips.length) { toast('No Reels or Shorts yet. Upload a short video to Your Story or the Home feed.'); return; }
+  sheet(title, '<div style="max-height:68vh;overflow:auto;display:grid;gap:14px">' + clips.map(function (x) {
+    return '<div style="background:#080d16;border-radius:14px;overflow:hidden;color:#fff"><video src="' + esc(x.media_url) + '" controls playsinline preload="metadata" style="display:block;width:100%;max-height:58vh;object-fit:contain;background:#000"></video><div style="padding:10px 12px"><b>' + esc(x.author_name || 'Wantok member') + '</b>' + (x.body ? '<p style="margin-top:5px">' + esc(x.body) + '</p>' : '') + '</div></div>';
+  }).join('') + '</div>');
+}
 function storyAddModal() {
   if (needLogin('Sign in to share a story')) return;
-  sheet('Add to Your Story', '<form data-form="story"><div class="field"><textarea name="text" rows="3" required maxlength="140" placeholder="Share something with your wantoks"></textarea></div><div class="field"><label class="l">Colour</label><div class="sw5">' + STC.map(function (g, i) { return '<label><input type="radio" name="color" value="' + i + '"' + (i === 0 ? ' checked' : '') + '><i style="background:' + g + '"></i></label>'; }).join('') + '</div></div><button class="btn">Share Story (24 hours)</button></form>');
+  sheet('Add to Your Story', '<div style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn alt" style="flex:1" data-a="watchReels">▶ Reels</button><button type="button" class="btn alt" style="flex:1" data-a="watchShorts">▶ Shorts</button><button type="button" class="btn" style="flex:1" data-a="goLive">🔴 Live</button></div><form data-form="story"><div class="field"><textarea name="text" rows="3" maxlength="140" placeholder="Share something with your wantoks"></textarea></div><div class="field"><label class="l">Photo, Reel or Short video (video max 50 MB)</label><label class="pick">📷 Choose photo or 🎥 video<input type="file" accept="image/*,video/*" data-photo hidden></label><div class="pv"></div></div><div class="field"><label class="l">Colour (for text-only stories)</label><div class="sw5">' + STC.map(function (g, i) { return '<label><input type="radio" name="color" value="' + i + '"' + (i === 0 ? ' checked' : '') + '><i style="background:' + g + '"></i></label>'; }).join('') + '</div></div><button class="btn">Share Story (24 hours)</button></form>');
 }
 function storyView(s) {
   P.viewed[s.id] = true; saveP(); afterClose = true;
   var mine = S.user && s.owner === S.user.id;
-  openModal('<div class="sv" style="background:' + STC[(s.color || 0) % STC.length] + '"><div class="svbar"><i></i></div><div class="svh">' + av(s.author_name, 'rgba(0,0,0,.25)', 40) + '<div><b>' + esc(s.author_name || 'Member') + '</b><br><small>' + ago(s.created_at) + ' ago</small></div>' + (mine ? '<button data-a="delStory" data-id="' + s.id + '" aria-label="Delete" style="font-size:18px">🗑</button>' : '') + '<button data-a="close" aria-label="Close" ' + (mine ? '' : '') + '>✕</button></div><div class="svt" data-a="close">' + esc(s.body) + '</div></div>');
-  setTimeout(function () { if (afterClose && $('.sv')) closeModal(); }, 5200);
+  var media = s.media_url ? (s.media_type === 'video'
+    ? '<video src="' + esc(s.media_url) + '" controls autoplay playsinline style="width:100%;max-height:72vh;object-fit:contain;background:#000"></video>'
+    : '<img src="' + esc(s.media_url) + '" alt="Story photo" style="width:100%;max-height:72vh;object-fit:contain">') : '';
+  openModal('<div class="sv" style="background:' + STC[(s.color || 0) % STC.length] + '"><div class="svbar"><i></i></div><div class="svh">' + av(s.author_name, 'rgba(0,0,0,.25)', 40) + '<div><b>' + esc(s.author_name || 'Member') + '</b><br><small>' + ago(s.created_at) + ' ago</small></div>' + (mine ? '<button data-a="delStory" data-id="' + s.id + '" aria-label="Delete" style="font-size:18px">🗑</button>' : '') + '<button data-a="close" aria-label="Close">✕</button></div><div class="svt" style="' + (media ? 'display:flex;flex-direction:column;gap:12px;justify-content:center;padding:12px;font-size:18px' : '') + '">' + media + (s.body ? '<div>' + esc(s.body) + '</div>' : '') + '</div></div>');
+  if (!s.media_url || s.media_type !== 'video') setTimeout(function () { if (afterClose && $('.sv')) closeModal(); }, 5200);
 }
 function reportModal() {
   if (needLogin('Sign in to report an issue')) return;
@@ -2291,6 +2301,8 @@ forgot: async function () {
 },
 toast: function (el) { toast(el.dataset.v); },
 newVideo: function () { closeModal(); newPostModal('video'); },
+watchReels: function () { openShortFeed('WANTOK PNG Reels'); },
+watchShorts: function () { openShortFeed('WANTOK PNG Shorts'); },
 playVideo: function (el) {
   var id = el.dataset.id;
   var p = S.posts.filter(function (x) { return String(x.id) === String(id); })[0];
@@ -2562,9 +2574,16 @@ comment: async function (f) {
   f.elements.text.value = ''; await paintComments(id); refreshPost(id);
 },
 story: async function (f) {
-  var r = await q(db.from('stories').insert({ author_name: myName(), body: val(f, 'text'), color: parseInt(f.elements.color.value, 10) || 0 }).select().single());
+  var body = val(f, 'text');
+  if (!body && !tmpFile) { toast('Write a message or choose a photo or video first.'); return; }
+  var row = { author_name: myName(), body: body || '', color: parseInt(f.elements.color.value, 10) || 0, media_type: 'text' };
+  if (tmpFile) {
+    if (isVideoFile(tmpFile)) { toast('Uploading your Reel or Short video...'); row.media_url = await uploadVideo(tmpFile); row.media_type = 'video'; }
+    else { toast('Uploading story photo...'); row.media_url = await uploadPhoto(tmpFile); row.media_type = 'image'; }
+  }
+  var r = await q(db.from('stories').insert(row).select().single());
   if (r.error) { toast('Could not share: ' + r.error.message); return; }
-  S.stories.unshift(r.data); closeModal(); render(true); toast('Story shared for 24 hours');
+  tmpFile = null; S.stories.unshift(r.data); closeModal(); render(true); toast('Story shared for 24 hours');
 },
 report: async function (f) {
   var row = { category: val(f, 'cat'), location: val(f, 'loc'), description: val(f, 'desc'), reporter_name: myName() };
