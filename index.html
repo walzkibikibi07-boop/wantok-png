@@ -41,7 +41,7 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .hdr-icons{display:flex;align-items:center;gap:12px}
 .bell{position:relative;width:32px;height:32px;display:grid;place-items:center}
 .badge{position:absolute;top:-4px;right:-5px;background:#e11d2e;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
-.avatar{width:38px;height:38px;border-radius:50%;background:#e6e9ee;display:grid;place-items:center}
+.avatar{width:38px;height:38px;border-radius:50%;background:#e6e9ee;display:grid;place-items:center;overflow:hidden;flex:none;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.14)}
 .search,.sbox{margin:8px 16px 12px;background:#e9edf2;border-radius:30px;height:50px;display:flex;align-items:center;gap:10px;padding:0 16px;color:#555}
 .sbox{margin:4px 0 10px}
 .search input,.sbox input{border:0;background:none;outline:none;flex:1;color:#111;min-width:0}
@@ -1705,7 +1705,8 @@ SCREENS.home = function () {
   var trending = S.posts.slice().sort(function (a, b) { return ((S.react[b.id] || {}).n || 0) + (S.ccount[b.id] || 0) - ((S.react[a.id] || {}).n || 0) - (S.ccount[a.id] || 0); }).slice(0, 4);
   trending = trendingWithVideos(trending);
   var seen = P.viewed;
-  return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('One PNG. One Community.') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + IC.user + '</button></div></div>'
+  var profilePhoto = S.user ? ((S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || '') : '';
+  return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('One PNG. One Community.') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + (profilePhoto ? '<img src="' + esc(profilePhoto) + '" alt="Your profile photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : IC.user) + '</button></div></div>'
   + '<div class="ctrl"><button class="chip" data-a="toggleLang">🌐 ' + (P.lang === 'tp' ? 'Tok Pisin' : 'English') + '</button><button class="chip intel-top-btn" data-a="go" data-v="intelligence">🇵🇬 National Intelligence Services</button></div>'
   + '<form class="search" data-form="gsearch">' + IC.search + '<input name="q" placeholder="' + esc(T('Search Wantok PNG')) + '" autocomplete="off"></form>'
   + guestCard('Sign in to post, message, apply and report.')
