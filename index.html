@@ -1253,11 +1253,11 @@ async function uploadPhoto(file, options) {
     if (!options || !options.allowOriginalOnDecodeError) throw decodeError;
     var name = String(file.name || '').toLowerCase();
     var type = String(file.type || '').toLowerCase();
-    if (type === 'image/jpeg' || /\\.jpe?g$/i.test(name)) {
+    if (type === 'image/jpeg' || /\.jpe?g$/i.test(name)) {
       contentType = 'image/jpeg'; extension = 'jpg';
-    } else if (type === 'image/png' || /\\.png$/i.test(name)) {
+    } else if (type === 'image/png' || /\.png$/i.test(name)) {
       contentType = 'image/png'; extension = 'png';
-    } else if (type === 'image/webp' || /\\.webp$/i.test(name)) {
+    } else if (type === 'image/webp' || /\.webp$/i.test(name)) {
       contentType = 'image/webp'; extension = 'webp';
     } else {
       throw new Error('This photo format cannot be processed on this phone. Please save or export it as JPG or PNG, then choose it again.');
