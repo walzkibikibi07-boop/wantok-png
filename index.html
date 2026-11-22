@@ -67,10 +67,11 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .alert p{font-size:13.5px;line-height:1.35;margin-top:3px;color:#4a3a10}
 .alert a{font-size:13px;font-weight:700;color:var(--blue);cursor:pointer;display:inline-block;margin-top:4px}
 .vt{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;vertical-align:middle;margin-left:5px}
-.banner{height:150px;position:relative;background:linear-gradient(180deg,#4aa3d8 0%,#8fd0ee 38%,#2c88b8 60%,#1b6f94 100%);overflow:hidden}
+.banner{height:190px;position:relative;background:linear-gradient(180deg,#4aa3d8 0%,#8fd0ee 38%,#2c88b8 60%,#1b6f94 100%);overflow:hidden}
 .banner::before{content:"";position:absolute;left:0;right:0;bottom:0;height:70%;background:radial-gradient(120px 60px at 70% 100%,#4f7f3a 0 98%,transparent 100%),radial-gradient(160px 80px at 45% 100%,#3e6b33 0 98%,transparent 100%),radial-gradient(130px 55px at 95% 100%,#5b8a40 0 98%,transparent 100%)}
 .banner::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,30,60,.65),rgba(10,30,60,0) 65%)}
-.banner-text{position:absolute;z-index:2;left:24px;top:30px;color:#fff;font-size:24px;font-weight:800;line-height:1.15;text-shadow:0 2px 6px rgba(0,0,0,.35)}
+.banner-text{position:absolute;z-index:2;left:24px;right:24px;top:18px;color:#fff;font-size:24px;font-weight:800;line-height:1.15;text-shadow:0 2px 6px rgba(0,0,0,.35)}
+.banner .search{position:relative;z-index:3;margin:12px 0 0;width:100%;height:42px;background:rgba(255,255,255,.96);box-shadow:0 2px 8px rgba(0,0,0,.18);text-shadow:none}
 .banner-bar{display:flex;margin-top:12px;height:4px;width:130px;border-radius:2px;overflow:hidden}
 .banner-bar i{flex:1}
 
@@ -1708,12 +1709,11 @@ SCREENS.home = function () {
   var profilePhoto = S.user ? ((S.profile && S.profile.photo_url) || (S.user.user_metadata && S.user.user_metadata.photo_url) || '') : '';
   return '<div class="header"><div class="brand">' + LOGO + '<div><h1>WANTOK <span>PNG</span></h1><p>' + T('One PNG. One Community.') + '</p></div></div><div class="hdr-icons"><button class="bell" data-a="go" data-v="notes" aria-label="Notifications">' + IC.bell + (unreadNotes() ? '<span class="badge">' + unreadNotes() + '</span>' : '') + '</button><button class="avatar" data-a="profileBtn" aria-label="Profile">' + (profilePhoto ? '<img src="' + esc(profilePhoto) + '" alt="Your profile photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : IC.user) + '</button></div></div>'
   + '<div class="ctrl"><button class="chip" data-a="toggleLang">🌐 ' + (P.lang === 'tp' ? 'Tok Pisin' : 'English') + '</button><button class="chip intel-top-btn" data-a="go" data-v="intelligence">🇵🇬 National Intelligence Services</button></div>'
-  + '<form class="search" data-form="gsearch">' + IC.search + '<input name="q" placeholder="' + esc(T('Search Wantok PNG')) + '" autocomplete="off"></form>'
   + guestCard('Sign in to post, message, apply and report.')
   + '<div class="stories"><button class="story" data-a="storyAdd"><div class="ring you"><span>+</span></div>' + T('Your Story') + '</button>'
   + S.stories.map(function (s) { return '<button class="story" data-a="storyView" data-id="' + s.id + '"><div class="ring' + (seen[s.id] ? ' seen' : '') + '"><span style="background:' + AVC[(s.color || 0) % AVC.length] + '">' + esc((s.author_name || '?').charAt(0).toUpperCase()) + '</span></div>' + esc((s.author_name || '').split(' ')[0]) + '</button>'; }).join('') + '</div>'
   + (n ? '<div class="alert"><span class="ai">📢</span><div><b>Community Alert <span class="vt">✓</span></b><p>' + esc(n.title) + (n.body ? ': ' + esc(n.body) : '') + '</p><a data-a="go" data-v="notices">Details ›</a></div></div>' : '')
-  + '<div class="banner"><div class="banner-text">Stronger<br>Communities<br>A Brighter PNG<div class="banner-bar"><i style="background:#d62828"></i><i style="background:#f5b800"></i><i style="background:#1f9d4a"></i></div></div></div>'
+  + '<div class="banner"><div class="banner-text">Stronger<br>Communities<br>A Brighter PNG<div class="banner-bar"><i style="background:#d62828"></i><i style="background:#f5b800"></i><i style="background:#1f9d4a"></i></div><form class="search" data-form="gsearch">' + IC.search + '<input name="q" placeholder="' + esc(T('Search Wantok PNG')) + '" autocomplete="off"></form></div></div>'
   + '<div class="tiles">'
   + '<button class="tile t-market" data-a="tab" data-v="market"><span class="ic">' + IC.cart + '</span><h3>MARKET</h3><p>' + T('Buy & Sell Locally') + '</p><span class="arrow">' + IC.arrow + '</span></button>'
   + '<button class="tile t-business" data-a="regBiz"><span class="ic">🏪</span><h3>BUSINESS CONNECT</h3><p>Register • Discover • Grow</p><span class="arrow">' + IC.arrow + '</span></button>'
