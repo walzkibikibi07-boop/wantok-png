@@ -1238,17 +1238,34 @@ function validatePhotoFile(file) {
   }
   return true;
 }
-async function uploadPhoto(file) {
+async function uploadPhoto(file, options) {
   if (!S.user || !S.user.id) throw new Error('Please sign in again before uploading a photo.');
   validatePhotoFile(file);
 
-  // Normalize supported phone-photo formats to JPEG before sending to Storage.
-  // This avoids mismatched MIME types and reduces large camera images.
-  var prepared = await compress(file, 1600, 0.82);
-  if (!prepared || !prepared.size) throw new Error('Could not prepare this photo. Please try a JPG or PNG image.');
-  var contentType = 'image/jpeg';
+  // Normally normalize photos to JPEG. For Sell only, if Android's browser
+  // cannot decode a valid JPG/PNG/WebP for compression, upload the original
+  // bytes with their real MIME type instead of blocking the listing.
+  var prepared, contentType = 'image/jpeg', extension = 'jpg';
+  try {
+    prepared = await compress(file, 1600, 0.82);
+    if (!prepared || !prepared.size) throw new Error('Could not prepare this photo.');
+  } catch (decodeError) {
+    if (!options || !options.allowOriginalOnDecodeError) throw decodeError;
+    var name = String(file.name || '').toLowerCase();
+    var type = String(file.type || '').toLowerCase();
+    if (type === 'image/jpeg' || /\\.jpe?g$/i.test(name)) {
+      contentType = 'image/jpeg'; extension = 'jpg';
+    } else if (type === 'image/png' || /\\.png$/i.test(name)) {
+      contentType = 'image/png'; extension = 'png';
+    } else if (type === 'image/webp' || /\\.webp$/i.test(name)) {
+      contentType = 'image/webp'; extension = 'webp';
+    } else {
+      throw new Error('This photo format cannot be processed on this phone. Please save or export it as JPG or PNG, then choose it again.');
+    }
+    prepared = file;
+  }
   var path = S.user.id + '/' + Date.now() + '-' +
-    Math.random().toString(36).slice(2, 9) + '.jpg';
+    Math.random().toString(36).slice(2, 9) + '.' + extension;
 
   var sessionResult = await db.auth.getSession();
   if (sessionResult.error) throw new Error('Could not verify your sign-in: ' + sessionResult.error.message);
@@ -2516,7 +2533,7 @@ listing: async function (f) {
   var t = val(f, 'title'); if (!t) return;
   var pr = val(f, 'price'); pr = pr ? (/^k/i.test(pr) ? pr : 'K' + pr) : 'Ask';
   var row = { title: t, price: pr, category: val(f, 'cat'), details: val(f, 'desc') || null, seller_name: myName(), province: loc().province, district: loc().district };
-  if (tmpFile) { toast('Uploading photo, please wait...'); row.photo_url = await uploadPhoto(tmpFile); }
+  if (tmpFile) { toast('Uploading photo, please wait...'); row.photo_url = await uploadPhoto(tmpFile, { allowOriginalOnDecodeError: true }); }
   var r = await q(db.from('listings').insert(row).select().single());
   if (r.error) { toast('Could not list: ' + r.error.message); return; }
   S.listings.unshift(r.data); ui.mq = ''; ui.mcat = 'All'; closeModal(); tab('market'); toast('Your listing is live');
