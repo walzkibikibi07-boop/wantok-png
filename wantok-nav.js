@@ -55,7 +55,7 @@
   ].join('');
   var st = document.createElement('style');
   st.id = 'wk-nav-css';
-  st.textContent = css;
+  st.textContent = css + '\n/* Keep Language and National Intelligence in the hamburger menu, not on the home screen. */\n.ctrl{display:none!important}';
   document.head.appendChild(st);
 
   function ic(d) { return '<svg viewBox="0 0 24 24">' + d + '</svg>'; }
