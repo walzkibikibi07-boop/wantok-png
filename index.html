@@ -228,6 +228,10 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .post-acts button.liked{color:var(--red)}.post-acts button.liked svg{fill:var(--red)}
 /* sub screens */
 .sh{position:sticky;top:0;z-index:10;background:var(--bg);display:flex;align-items:center;gap:10px;padding:14px 12px 10px}
+/* More screen: prevent the stray decorative/sticky divider above its heading. */
+.more-screen{position:relative;padding-top:0;margin-top:0}
+.more-screen::before,.more-screen::after,.more-screen .sh::before,.more-screen .sh::after{content:none!important;display:none!important}
+.more-screen .sh{position:relative;top:auto;z-index:1;margin:0;border:0;outline:0;box-shadow:none}
 .sh h2{font-size:20px;font-weight:800;flex:1;min-width:0}
 .sh h2.ch{font-size:18px}
 .ib{width:38px;height:38px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.12);flex:none}
@@ -2021,7 +2025,7 @@ SCREENS.more = function () {
   function row(ic, t, sub2, right, act, v) { return '<button class="mrow" data-a="' + act + '"' + (v ? ' data-v="' + v + '"' : '') + '><span class="mi">' + ic + '</span><span class="mt">' + t + (sub2 ? '<small>' + sub2 + '</small>' : '') + '</span>' + (right || '') + '</button>'; }
   var head = S.user ? '<div class="pcard">' + av(myName(), '#f5b800', 54) + '<div style="flex:1"><b>' + esc(myName()) + '</b><small>' + esc([S.profile && S.profile.district, S.profile && S.profile.province].filter(Boolean).join(', ') || (S.user.email || S.user.phone || '')) + '</small></div><button class="btn sm alt" data-a="editProfile">Edit</button></div>'
     : '<div class="pcard">' + av('?', '#9aa5b4', 54) + '<div style="flex:1"><b>Guest</b><small>Sign in to post, message and apply</small></div><button class="btn sm gold" data-a="signin">Sign in</button></div>';
-  return '<div class="sh"><h2>' + T('More') + '</h2></div><div class="pad">' + head
+  return '<div class="more-screen"><div class="sh"><h2>' + T('More') + '</h2></div><div class="pad">' + head
   + row('🇵🇬', 'National Intelligence Centre', 'Maps, services, opportunities and community information', '', 'go', 'intelligence')
   + row('🔔', T('Notifications'), unreadNotes() + ' new', '', 'go', 'notes') + row('🤝', T('Wantok Circles'), '', '', 'go', 'circles') + row('⭐', T('Talent'), '', '', 'go', 'talent')
   + row('❤️', T('Saved Items'), Object.keys(S.saved).length + ' saved', '', 'go', 'saved') + row('🗂️', T('My Posts & Listings'), '', '', 'go', 'mine')
@@ -2031,7 +2035,7 @@ SCREENS.more = function () {
   + row('🌐', T('Language'), P.lang === 'tp' ? 'Tok Pisin' : 'English', '<span class="sw' + (P.lang === 'tp' ? ' on' : '') + '"><i></i></span>', 'toggleLang')
   + row('📱', 'Share WANTOK PNG', 'Scan QR code to visit our platform', '', 'showQR')
 + row('ℹ️', 'About WANTOK PNG', '', '', 'about')
-+ (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div>';
++ (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div></div>';
 };
 SCREENS.grow = function () {
   var plans = REVENUE_PUBLIC_PLANS || [];
