@@ -1239,7 +1239,7 @@ async function ensureProfile() {
   S.profile = w.data || row;
   if (!S.profile.full_name) setTimeout(function () { profileModal(true); }, 500);
 }
-var REVENUE_ADMIN = false, REVENUE_DATA = null;
+var REVENUE_ADMIN = false, REVENUE_DATA = null, REVENUE_PUBLIC_PLANS = [];
 async function loadRevenueAccess() {
   REVENUE_ADMIN = false;
   if (!S.user) return false;
@@ -1249,7 +1249,7 @@ async function loadRevenueAccess() {
 }
 async function loadRevenueData() {
   if (!REVENUE_ADMIN) throw new Error('Administrator access is required.');
-  var names = ['revenue_plans','business_subscriptions','ad_campaigns','job_promotions','platform_revenue_events'];
+  var names = ['revenue_plans','business_subscriptions','ad_campaigns','job_promotions','platform_revenue_events','revenue_enquiries'];
   var results = await Promise.all(names.map(function (n) { return db.from(n).select('*').order('created_at', { ascending: false }).limit(100); }));
   var out = {};
   results.forEach(function (r, i) { if (r.error) throw r.error; out[names[i]] = r.data || []; });
@@ -2025,12 +2025,20 @@ SCREENS.more = function () {
   + row('🇵🇬', 'National Intelligence Centre', 'Maps, services, opportunities and community information', '', 'go', 'intelligence')
   + row('🔔', T('Notifications'), unreadNotes() + ' new', '', 'go', 'notes') + row('🤝', T('Wantok Circles'), '', '', 'go', 'circles') + row('⭐', T('Talent'), '', '', 'go', 'talent')
   + row('❤️', T('Saved Items'), Object.keys(S.saved).length + ' saved', '', 'go', 'saved') + row('🗂️', T('My Posts & Listings'), '', '', 'go', 'mine')
+  + row('📣', 'Grow your Business', 'Promote your business, products, jobs or services', '', 'growBusiness')
   + row('🏪', 'Register a Business', 'Get listed in the WANTOK PNG directory', '', 'regBiz')
   + (REVENUE_ADMIN ? row('📈', 'WANTOK PNG Revenue Centre', 'Subscriptions, advertising, jobs and income reports', '', 'revenueCentre') : '')
   + row('🌐', T('Language'), P.lang === 'tp' ? 'Tok Pisin' : 'English', '<span class="sw' + (P.lang === 'tp' ? ' on' : '') + '"><i></i></span>', 'toggleLang')
   + row('📱', 'Share WANTOK PNG', 'Scan QR code to visit our platform', '', 'showQR')
 + row('ℹ️', 'About WANTOK PNG', '', '', 'about')
 + (S.user ? row('🚪', 'Sign out', '', '', 'signout') : '') + '</div>';
+};
+SCREENS.grow = function () {
+  var plans = REVENUE_PUBLIC_PLANS || [];
+  return sub('Grow your Business') + '<div class="pad"><div class="gnote">Join WANTOK PNG for free. Choose optional promotion services to reach customers across Papua New Guinea. Sending an enquiry does not charge you or activate a paid service.</div>'
+  + '<h3 class="h3">Business subscriptions</h3>' + plans.filter(function(p){return p.id.indexOf('business-')===0;}).map(function(p){return '<div class="ncard"><b>' + esc(p.name) + ' • K' + Number(p.amount_kina).toFixed(2) + '/' + esc(p.billing_interval) + '</b><p>' + esc(p.description) + '</p><button class="btn sm" data-a="requestRevenue" data-id="' + esc(p.id) + '">Enquire about this plan</button></div>';}).join('')
+  + '<h3 class="h3">Advertising, jobs and promotions</h3>' + plans.filter(function(p){return p.id.indexOf('business-')!==0;}).map(function(p){return '<div class="ncard"><b>' + esc(p.name) + ' • ' + (Number(p.amount_kina)>0 ? 'K' + Number(p.amount_kina).toFixed(2) : 'Custom quote') + (p.billing_interval==='monthly' ? '/month' : '') + '</b><p>' + esc(p.description) + '</p><button class="btn sm" data-a="requestRevenue" data-id="' + esc(p.id) + '">Enquire about this service</button></div>';}).join('')
+  + '<p class="note" style="margin:14px 0">Prices are proposed starting rates. WANTOK PNG will confirm availability, placement, applicable terms and payment arrangements before any charge.</p></div>';
 };
 SCREENS.revenue = function () {
   if (!S.user || !REVENUE_ADMIN) return sub('Revenue Centre') + '<div class="empty">Administrator access is required.</div>';
@@ -2049,6 +2057,7 @@ SCREENS.revenue = function () {
   + rows(ads,'Advertising campaigns','title',function(x){return 'Budget K' + Number(x.budget_kina || 0).toFixed(2) + ' • ' + (x.placement || '');})
   + rows(jobs,'Job promotions','tier',function(x){return 'K' + Number(x.amount_kina || 0).toFixed(2);})
   + rows(events,'Revenue ledger','event_type',function(x){return 'Gross K' + Number(x.gross_kina || 0).toFixed(2) + ' • Fee K' + Number(x.platform_fee_kina || 0).toFixed(2);})
+  + rows(d.revenue_enquiries || [],'Business and advertising enquiries','business_name',function(x){return (x.plan_id || '') + ' • ' + (x.contact || '');})
   + '<p class="note" style="margin:14px 0">Payment gateways are not yet activated for these subscription and advertising products. Do not mark a payment as paid manually without verified provider evidence.</p></div>';
 };
 SCREENS.profile = function () {
@@ -2423,6 +2432,8 @@ back: function () { if (histOK && history.state && history.state.d && stack.leng
 close: function () { closeModal(); },
 signin: function () { closeModal(); ui.auth = { tab: 'phone', step: 'enter', phone: '', mode: 'in' }; authModal(); },
 signout: async function () { await db.auth.signOut(); S.user = null; await afterAuth(); tab('home'); toast('Signed out'); },
+growBusiness: async function () { var r = await db.from('revenue_plans').select('*').eq('is_active', true).order('sort_order'); if (r.error) { toast('Could not load business plans: ' + r.error.message); return; } REVENUE_PUBLIC_PLANS = r.data || []; go('grow'); },
+requestRevenue: function (el) { if (!S.user) { toast('Please sign in to send a business enquiry.'); A.signin(); return; } var p = REVENUE_PUBLIC_PLANS.filter(function(x){return x.id===el.dataset.id;})[0]; if (!p) { toast('This plan is not available. Refresh and try again.'); return; } sheet('Enquire: ' + p.name, '<form data-form="revenueEnquiry"><input type="hidden" name="plan_id" value="' + esc(p.id) + '"><div class="field"><label class="l">Business or organisation name</label><input name="business_name" required maxlength="140" placeholder="Your business name"></div><div class="field"><label class="l">Phone or email</label><input name="contact" required maxlength="120" placeholder="How can we contact you?"></div><div class="field"><label class="l">Additional details</label><textarea name="message" maxlength="1200" rows="3" placeholder="Tell us what you want to promote"></textarea></div><p class="note">No payment is taken by sending this enquiry.</p><button class="btn">Send enquiry</button></form>'); },
 revenueCentre: async function () { if (!S.user) { A.signin(); return; } if (!await loadRevenueAccess()) { toast('Administrator access is required.'); return; } try { await loadRevenueData(); go('revenue'); } catch (e) { toast('Revenue data could not load: ' + (e.message || 'Please try again.')); } },
 revenueRefresh: async function () { try { await loadRevenueData(); render(true); toast('Revenue data refreshed'); } catch (e) { toast('Refresh failed: ' + (e.message || 'Please try again.')); } },
 profileBtn: function () { if (S.user) go('profile'); else A.signin(); },
@@ -2607,6 +2618,13 @@ document.addEventListener('click', function (e) {
 function val(f, n) { return (f.elements[n] && f.elements[n].value || '').trim(); }
 function loc() { var p = S.profile || {}; return { province: p.province || null, district: p.district || null }; }
 var FORMS = {
+revenueEnquiry: async function (f) {
+  if (!S.user) { toast('Sign in to send an enquiry.'); return; }
+  var row = { user_id: S.user.id, plan_id: val(f, 'plan_id'), business_name: val(f, 'business_name'), contact: val(f, 'contact'), message: val(f, 'message') };
+  var r = await q(db.from('revenue_enquiries').insert(row).select().single());
+  if (r.error) { toast('Could not send enquiry: ' + r.error.message); return; }
+  closeModal(); toast('Enquiry sent. WANTOK PNG will contact you.');
+},
 gsearch: function (f) { var s = val(f, 'q'); if (!s) { toast('Type something to search'); return; } go('search', { q: s }); },
 otpSend: async function (f) {
   var ph = normPhone(val(f, 'phone')); if (ph.length < 9) { authMsg('Enter a valid phone number.', true); return; }
