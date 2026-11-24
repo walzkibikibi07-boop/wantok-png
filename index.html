@@ -1832,10 +1832,54 @@ function renderTabs() {
   }).join('');
 }
 function stopPoll() { if (pollT) { clearInterval(pollT); pollT = null; } }
+/* ---------- Live PNG section metadata / SEO ---------- */
+function updateSectionMetadata(route) {
+  var listings = S.listings || [], jobs = S.jobs || [], talents = S.talents || [], circles = S.circles || [];
+  var businessListings = listings.filter(function (x) { return String(x.category || '').toLowerCase() === 'business'; });
+  var pages = {
+    market: { title: 'PNG Marketplace | Buy & Sell Across Papua New Guinea', description: 'Discover local PNG marketplace listings, sellers, products and prices in Papua New Guinea kina. Browse goods by category, province and district on WANTOK PNG.', keywords: 'PNG marketplace, buy and sell PNG, Papua New Guinea products, local sellers, Kina prices, PNG provinces, PNG districts', count: listings.length, type: 'market' },
+    jobs: { title: 'PNG Jobs & Work Opportunities | WANTOK PNG', description: 'Explore work opportunities across Papua New Guinea, including trades, labour, retail, transport and digital jobs. Find opportunities by location and employer.', keywords: 'PNG jobs, jobs in Papua New Guinea, PNG employment, work opportunities, trades, labour, retail, transport jobs', count: jobs.length, type: 'jobs' },
+    talent: { title: 'PNG Talent & Creators | WANTOK PNG', description: 'Discover Papua New Guinea talent, creators, artists, performers, craftspeople and sportspeople. Explore community entries and live votes on WANTOK PNG.', keywords: 'PNG talent, Papua New Guinea artists, PNG music, dance, sports, creators, crafts, community talent', count: talents.length, type: 'talent' },
+    grow: { title: 'PNG Business Connect | WANTOK PNG', description: 'Connect Papua New Guinea businesses with customers and communities. Explore business listings, promotion services and opportunities across PNG on WANTOK PNG.', keywords: 'PNG business directory, Papua New Guinea businesses, SME PNG, business promotion, local business PNG, PNG entrepreneurs', count: businessListings.length, type: 'business' },
+    circles: { title: 'PNG Wantok Communities & Circles | WANTOK PNG', description: 'Join Wantok communities across Papua New Guinea. Connect with local groups, share knowledge, support one another and build stronger PNG communities.', keywords: 'PNG communities, Wantok groups, Papua New Guinea community network, local groups, PNG provinces, district communities', count: circles.length, type: 'community' }
+  };
+  var page = pages[route];
+  if (!page) return;
+  document.title = page.title;
+  function setMeta(selector, attr, value) {
+    var node = document.querySelector(selector);
+    if (node) node.setAttribute(attr, value);
+  }
+  setMeta('meta[name="description"]', 'content', page.description);
+  setMeta('meta[name="keywords"]', 'content', page.keywords + ', Papua New Guinea, WANTOK PNG');
+  setMeta('meta[property="og:title"]', 'content', page.title);
+  setMeta('meta[property="og:description"]', 'content', page.description);
+  setMeta('meta[name="twitter:title"]', 'content', page.title);
+  setMeta('meta[name="twitter:description"]', 'content', page.description);
+  var schema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: page.title,
+    description: page.description,
+    url: 'https://walzkibikibi07-boop.github.io/wantok-png/#' + route,
+    inLanguage: ['en-PG', 'tpi'],
+    isPartOf: { '@type': 'WebSite', name: 'WANTOK PNG', url: 'https://walzkibikibi07-boop.github.io/wantok-png/' },
+    about: { '@type': 'Country', name: 'Papua New Guinea' },
+    spatialCoverage: { '@type': 'Country', name: 'Papua New Guinea' },
+    additionalProperty: [
+      { '@type': 'PropertyValue', name: 'Live section records currently loaded', value: page.count },
+      { '@type': 'PropertyValue', name: 'Metadata refreshed', value: new Date().toISOString() }
+    ]
+  };
+  var ld = document.getElementById('wantok-live-section-schema');
+  if (!ld) { ld = document.createElement('script'); ld.id = 'wantok-live-section-schema'; ld.type = 'application/ld+json'; document.head.appendChild(ld); }
+  ld.textContent = JSON.stringify(schema);
+}
 function render(keep) {
   stopPoll();
   var cur = stack[stack.length - 1], y = window.scrollY;
   var fn = SCREENS[cur.n];
+  updateSectionMetadata(cur.n);
   $('#screen').innerHTML = !S.loaded && cur.n !== 'more' ? '<div class="sh"><h2>WANTOK PNG</h2></div><div class="empty">Loading...</div>' : (fn ? fn(cur.p || {}) : notFound());
   var chatting = cur.n === 'chat' || cur.n === 'cchat';
   document.body.classList.toggle('inchat', chatting);
