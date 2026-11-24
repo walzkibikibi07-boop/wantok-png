@@ -2031,6 +2031,7 @@ SCREENS.more = function () {
   + row('❤️', T('Saved Items'), Object.keys(S.saved).length + ' saved', '', 'go', 'saved') + row('🗂️', T('My Posts & Listings'), '', '', 'go', 'mine')
   + row('📣', 'Grow your Business', 'Promote your business, products, jobs or services', '', 'growBusiness')
   + row('🏪', 'Register a Business', 'Get listed in the WANTOK PNG directory', '', 'regBiz')
+  + row('👛', 'Service Wallet', 'View your Kina wallet and transaction history', '', 'go', 'wallet')
   + (REVENUE_ADMIN ? row('📈', 'WANTOK PNG Revenue Centre', 'Subscriptions, advertising, jobs and income reports', '', 'revenueCentre') : '')
   + row('🌐', T('Language'), P.lang === 'tp' ? 'Tok Pisin' : 'English', '<span class="sw' + (P.lang === 'tp' ? ' on' : '') + '"><i></i></span>', 'toggleLang')
   + row('📱', 'Share WANTOK PNG', 'Scan QR code to visit our platform', '', 'showQR')
@@ -2064,6 +2065,49 @@ SCREENS.revenue = function () {
   + rows(events,'Revenue ledger','event_type',function(x){return 'Gross K' + Number(x.gross_kina || 0).toFixed(2) + ' • Fee K' + Number(x.platform_fee_kina || 0).toFixed(2);})
   + '<h3 class="h3">Business and advertising enquiries (' + enquiries.length + ')</h3>' + (enquiries.length ? enquiries.slice(0,20).map(function(x){var next=x.status==='new'?'contacted':x.status==='contacted'?'approved':x.status==='approved'?'converted':null;return '<div class="ncard"><b>' + esc(x.business_name) + '</b><p>' + esc(x.plan_id) + ' • ' + esc(x.contact) + '</p>' + (x.message ? '<p>' + esc(x.message) + '</p>' : '') + '<small>' + esc(x.status) + ' • ' + ago(x.created_at) + '</small>' + (next ? '<button class="btn sm" style="margin-top:8px" data-a="setEnquiryStatus" data-id="' + esc(x.id) + '" data-v="' + next + '">Mark ' + next + '</button>' : '') + '</div>';}).join('') : '<div class="empty">No business enquiries yet.</div>')
   + '<p class="note" style="margin:14px 0">Payment gateways are not yet activated for these subscription and advertising products. Do not mark a payment as paid manually without verified provider evidence.</p></div>';
+};
+SCREENS.wallet = function () {
+  if (!S.user) return sub('Service Wallet') + '<div class="pad"><div class="empty">Sign in to access your Service Wallet.</div></div>';
+  var html = sub('Service Wallet') + '<div class="pad">'
+    + '<div class="card" style="padding:20px;border-radius:18px;background:linear-gradient(135deg,#102b46,#17634c);color:#fff">'
+    + '<div style="font-size:13px;opacity:.85">WANTOK PNG Service Wallet</div>'
+    + '<div id="wallet-balance" style="font-size:30px;font-weight:900;margin:12px 0">K—</div>'
+    + '<div id="wallet-state" style="font-size:13px">Checking secure wallet status…</div></div>'
+    + '<h3 class="h3" style="margin-top:20px">Wallet services</h3>'
+    + '<div class="gnote">BSP has been selected as our preferred payment partner. Deposits, withdrawals and money transfers will become available only after BSP merchant onboarding, approved API access and required regulatory arrangements are completed.</div>'
+    + '<div class="ncard"><b>🔒 Secure transaction history</b><p>Your wallet balance is calculated from verified, posted ledger entries. Pending payments do not increase your available balance.</p></div>'
+    + '<div class="ncard"><b>🏦 BSP payment connection</b><p>WANTOK PNG is preparing the BSP Pay / Internet Payment Gateway connection. No payment will be requested until the approved BSP connection is configured.</p><a href="https://www.bsp.com.pg/help/contact-us/" target="_blank" rel="noopener">Contact BSP Merchant Services</a></div>'
+    + '<h3 class="h3" style="margin-top:20px">Recent transactions</h3>'
+    + '<div id="wallet-history" class="empty">Your verified wallet transactions will appear here.</div></div>';
+  setTimeout(async function () {
+    var bal = document.getElementById('wallet-balance');
+    var state = document.getElementById('wallet-state');
+    var hist = document.getElementById('wallet-history');
+    if (!bal || !state || !hist) return;
+    try {
+      var result = await db.rpc('wallet_get_or_create_account');
+      if (result.error) throw result.error;
+      var a = Array.isArray(result.data) ? result.data[0] : result.data;
+      if (!a) throw new Error('Wallet account is not available.');
+      bal.textContent = 'K' + Number(a.balance_kina || 0).toFixed(2);
+      state.textContent = a.status === 'active' ? 'Wallet active' : 'Setup pending — BSP approval required';
+      var entries = await db.from('wallet_ledger_entries')
+        .select('entry_type,direction,amount_kina,status,description,created_at')
+        .eq('wallet_account_id', a.account_id)
+        .order('created_at', {ascending:false}).limit(10);
+      if (entries.error) throw entries.error;
+      hist.innerHTML = entries.data && entries.data.length ? entries.data.map(function(e) {
+        return '<div class="ncard"><b>' + esc(e.description || e.entry_type) + '</b><p>' +
+          (e.direction === 'credit' ? '+' : '−') + 'K' + Number(e.amount_kina).toFixed(2) +
+          ' · ' + esc(e.status) + '</p><small>' + esc(new Date(e.created_at).toLocaleString()) + '</small></div>';
+      }).join('') : '<div class="empty">No wallet transactions yet.</div>';
+    } catch (err) {
+      state.textContent = 'Wallet service is temporarily unavailable.';
+      hist.textContent = 'Could not load wallet details. Please try again later.';
+      console.error('Wallet load failed', err);
+    }
+  }, 0);
+  return html;
 };
 SCREENS.profile = function () {
   if (!S.user) return sub(T('Profile')) + '<div class="empty">Sign in to see your profile.<br><button class="btn sm" style="margin-top:10px" data-a="signin">Sign in</button></div>';
