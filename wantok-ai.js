@@ -210,7 +210,11 @@
     head.appendChild(close);
     panel.appendChild(head);
 
-    var liveStatus = el("div", { id: "wantok-ai-live-status" }, "● Connecting to public WANTOK PNG records...");\n    liveStatus.style.cssText = "font-size:11px;color:#64748b;padding:6px 12px;background:#fff";\n    panel.appendChild(liveStatus);\n\n    var controls = el("div", { id: "wantok-ai-controls" });
+    var liveStatus = el("div", { id: "wantok-ai-live-status" }, "● Connecting to public WANTOK PNG records...");
+    liveStatus.style.cssText = "font-size:11px;color:#64748b;padding:6px 12px;background:#fff";
+    panel.appendChild(liveStatus);
+
+    var controls = el("div", { id: "wantok-ai-controls" });
     var modeSelect = el("select", { "aria-label": "AI topic" });
     [
       ["general", "All WANTOK PNG"],
