@@ -6,7 +6,7 @@
   var SB_URL = "https://rpcekiqhvsmzjmjimnsj.supabase.co";
   var SB_KEY = "sb_publishable_bmR_OLpVkON13vH-uTCkRg_GGH8jllW";
   var db = null;
-  var liveData = { posts: [], jobs: [], businesses: [], products: [], talents: [], services: [], locations: [], ready: false };
+  var liveData = { posts: [], jobs: [], businesses: [], products: [], talents: [], services: [], locations: [], districtContacts: [], ready: false };
   var history = [];
   var busy = false;
   var mode = "general";
@@ -90,7 +90,7 @@
         db.from("products").select("name,description,price_kina,unit,in_stock,category_id").eq("in_stock",true).limit(8),
         db.from("talents").select("title,category,description,owner_name").eq("status","approved").order("created_at",{ascending:false}).limit(6),
         db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(20),
-        db.from("gov_locations").select("id,name,location_type,parent_id,region,official_source_url").order("name",{ascending:true}).limit(500)
+        db.from("gov_locations").select("id,name,location_type,parent_id,region,official_source_url").order("name",{ascending:true}).limit(500), db.from("gov_district_contacts").select("location_id,department,office_name,contact_name,phone,email,website_url,source_url,verification_status,notes").order("department",{ascending:true}).limit(250)
       ]);
       liveData.posts = results[0].error ? [] : (results[0].data || []);
       liveData.jobs = results[1].error ? [] : (results[1].data || []);
@@ -98,7 +98,7 @@
       liveData.products = results[3].error ? [] : (results[3].data || []);
       liveData.talents = results[4].error ? [] : (results[4].data || []);
       liveData.services = results[5].error ? [] : (results[5].data || []);
-      liveData.locations = results[6].error ? [] : (results[6].data || []);
+      liveData.locations = results[6].error ? [] : (results[6].data || []); liveData.districtContacts = results[7].error ? [] : (results[7].data || []);
       liveData.ready = results.some(function(r){ return !r.error; });
       var status = document.getElementById("wantok-ai-live-status");
       if (status) status.textContent = liveData.ready ? "● Connected to approved public WANTOK PNG records" : "● Live records unavailable · basic help remains available";
@@ -173,11 +173,23 @@
           portalLines.push((hit.location_type === "district" ? hit.name+" district administration / provincial contact directory" : hit.name+" provincial administration")+" — "+portal);
         }
       });
+      var contactLines = [];
+      locationHits.filter(function(hit){ return hit.location_type === "district"; }).forEach(function(hit){
+        liveData.districtContacts.filter(function(contact){ return contact.location_id === hit.id; }).forEach(function(contact){
+          var line = hit.name + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
+          if (contact.contact_name) line += "; contact: " + contact.contact_name;
+          if (contact.phone) line += "; phone: " + contact.phone;
+          if (contact.email) line += "; email: " + contact.email;
+          if (contact.source_url) line += "; source: " + contact.source_url;
+          contactLines.push(line);
+        });
+      });
+      var contactText = contactLines.length ? "\\n\\nPublished district office contacts (verify current availability):\\n" + contactLines.join("\\n") : "";
       var districtGuidance = requestedDistrict
         ? "\\n\\nDistrict service connections: the department links below are official national department portals available to people across PNG. They are not proof of a staffed office in this district. Use the provincial/district administration contact directory above to confirm the nearest local office, officer and current contact details."
         : "";
       var portalText = portalLines.length ? "\\n\\nOfficial provincial / district contact directory:\\n"+portalLines.join("\\n") : "";
-      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nDirectory source: Open Admin Data (CC BY 4.0), cross-check with the relevant Provincial or District Administration. Contact details are not included unless separately verified."+portalText+districtGuidance : portalText+districtGuidance;
+      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nDirectory source: Open Admin Data (CC BY 4.0), cross-check with the relevant Provincial or District Administration."+portalText+contactText+districtGuidance : portalText+contactText+districtGuidance;
       var guidance = matches.length ? "I matched the closest department/service to your question." : "Here are the main official links currently in the directory. Tell me the department or service name to narrow the list.";
       return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs+locationText : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs+locationText;
     }
