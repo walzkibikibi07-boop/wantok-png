@@ -1309,7 +1309,7 @@ async function loadBusinessEnquiries() {
   S.businessInbox = []; S.myBusinessEnquiries = [];
   if (!S.user) return;
   var mine = S.businesses.filter(function (b) { return b.owner === S.user.id; }).map(function (b) { return b.id; });
-  if (mine.length) { var inbox = await q(db.from('business_enquiries').select('id,business_id,product_id,customer_name,customer_phone,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').in('business_id', mine).order('created_at', { ascending: false }).limit(100)); if (inbox.data) S.businessInbox = inbox.data; }
+  if (mine.length) { var inbox = await q(db.from('business_enquiries').select('id,business_id,product_id,customer_id,customer_name,customer_phone,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').in('business_id', mine).order('created_at', { ascending: false }).limit(100)); if (inbox.data) S.businessInbox = inbox.data; }
   var own = await q(db.from('business_enquiries').select('id,business_id,product_id,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').eq('customer_id', S.user.id).order('created_at', { ascending: false }).limit(100));
   if (own.data) S.myBusinessEnquiries = own.data;
 }
@@ -2104,8 +2104,9 @@ function convs() {
   var me = myId(), map = {};
   S.msgs.forEach(function (m) {
     var other = m.sender === me ? m.recipient : m.sender, name = m.sender === me ? m.recipient_name : m.sender_name;
-    var c = map[other] || (map[other] = { id: other, name: name || 'Member', last: m, unread: 0 });
+    var c = map[other] || (map[other] = { id: other, name: name || 'Member', last: m, unread: 0, enquiryId: null });
     if (tsOf(m.created_at) >= tsOf(c.last.created_at)) c.last = m;
+    if (m.business_enquiry_id) c.enquiryId = m.business_enquiry_id;
     if (name) c.name = name;
     if (m.recipient === me && !m.read_at) c.unread++;
   });
@@ -2115,7 +2116,7 @@ SCREENS.messages = function () {
   if (!S.user) return '<div class="sh"><h2>' + T('Messages') + '</h2></div><div class="empty">Sign in to send and read messages.<br><button class="btn sm" style="margin-top:10px" data-a="signin">Sign in</button></div>';
   var list = convs(), me = myId();
   return '<div class="sh"><h2>' + T('Messages') + '</h2></div><div class="pad">' + (list.length ? list.map(function (c) {
-    return '<div class="item" data-a="openChat" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '">' + av(c.name, null, 48) + '<div class="info"><b>' + esc(c.name) + '</b><small>' + (c.last.sender === me ? 'You: ' : '') + esc(c.last.body) + '</small></div><div class="side"><small style="color:#777;font-size:11px">' + ago(c.last.created_at) + '</small>' + (c.unread ? '<span class="badge" style="position:static">' + c.unread + '</span>' : '') + '</div></div>';
+    return '<div class="item" data-a="openChat" data-id="' + esc(c.id) + '" data-name="' + esc(c.name) + '" data-enquiry="' + esc(c.enquiryId || '') + '">' + av(c.name, null, 48) + '<div class="info"><b>' + esc(c.name) + '</b><small>' + (c.last.sender === me ? 'You: ' : '') + esc(c.last.body) + '</small></div><div class="side"><small style="color:#777;font-size:11px">' + ago(c.last.created_at) + '</small>' + (c.unread ? '<span class="badge" style="position:static">' + c.unread + '</span>' : '') + '</div></div>';
   }).join('') : '<div class="empty">No conversations yet.<br>Message a seller or an employer to start.</div>') + '</div>';
 };
 function bub(text, mine, who, t) { return '<div class="bub' + (mine ? ' me' : '') + '">' + (who && !mine ? '<b>' + esc(who) + '</b>' : '') + esc(text) + '<small>' + ago(t) + '</small></div>'; }
@@ -2130,7 +2131,7 @@ function paintChat() {
 SCREENS.chat = function (p) {
   var name = p.name || (convs().filter(function (c) { return c.id === p.id; })[0] || {}).name || 'Chat';
   var th = directThread(p.id), me = myId();
-  return '<div class="sh"><button class="ib" data-a="back" aria-label="Back">' + IC.back + '</button>' + av(name, null, 38) + '<h2 class="ch">' + esc(name) + '</h2></div><div class="chatwrap">' + (th.length ? th.map(function (m) { return bub(m.body, m.sender === me, null, m.created_at); }).join('') : '<div class="empty">Say hello 👋</div>') + '</div>';
+  return '<div class="sh"><button class="ib" data-a="back" aria-label="Back">' + IC.back + '</button>' + av(name, null, 38) + '<h2 class="ch">' + esc(name) + '</h2></div>' + (p.enquiryId ? '<div class="pad"><span class="pill">Business enquiry #' + esc(p.enquiryId) + ' • linked conversation</span></div>' : '') + '<div class="chatwrap">' + (th.length ? th.map(function (m) { return bub(m.body, m.sender === me, null, m.created_at); }).join('') : '<div class="empty">Say hello 👋</div>') + '</div>';
 };
 SCREENS.cchat = function (p) {
   var c = by(S.circles, p.id); if (!c) return notFound();
@@ -2435,13 +2436,13 @@ function businessEnquiryItems() {
     var deliveryButtons=e.fulfilment==='delivery'
       ? '<div class="row2" style="flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="preparing">Preparing</button><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="out_for_delivery">Out for delivery</button><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="delivered">Delivered</button></div>'
       : '<div class="row2" style="flex-wrap:wrap;margin-top:8px"><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="preparing">Preparing</button><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="ready_for_pickup">Ready for pickup</button><button class="btn sm" data-a="updateBizEnquiry" data-id="'+e.id+'" data-kind="delivery" data-v="collected">Collected</button></div>';
-    return '<article class="card" style="padding:12px;margin:8px 0"><b>'+esc(e.customer_name)+'</b><div class="meta">'+esc(b?(b.trading_name||b.name):'Your business')+' • '+esc(p?p.name:'General enquiry')+' • '+esc(e.created_at?new Date(e.created_at).toLocaleString():'')+'</div><p class="desc">'+esc(e.message)+'</p><div class="meta">Qty: '+e.quantity+' • '+(e.fulfilment==='delivery'?'Delivery requested':'Pickup requested')+(e.delivery_address?' • '+esc(e.delivery_address):'')+'</div>'+(e.customer_phone?'<p><a href="tel:'+esc(e.customer_phone)+'">Call customer: '+esc(e.customer_phone)+'</a></p>':'')+'<div class="row2"><span class="pill">Order: '+esc(e.status)+'</span><span class="pill">Delivery: '+esc(deliveryLabel[e.delivery_status]||e.delivery_status||'Pending')+'</span></div>'+orderButtons+deliveryButtons+'<div class="row2" style="flex-wrap:wrap;margin-top:8px"><button class="btn sm alt" data-a="bizEnquiryTracking" data-id="'+e.id+'">Add tracking reference</button><button class="btn sm alt" data-a="bizEnquiryNote" data-id="'+e.id+'">Customer update note</button></div>'+(e.tracking_reference?'<p class="meta">Tracking: '+esc(e.tracking_reference)+'</p>':'')+(e.owner_note?'<p class="meta">Customer note: '+esc(e.owner_note)+'</p>':'')+'</article>';
+    return '<article class="card" style="padding:12px;margin:8px 0"><b>'+esc(e.customer_name)+'</b><div class="meta">'+esc(b?(b.trading_name||b.name):'Your business')+' • '+esc(p?p.name:'General enquiry')+' • '+esc(e.created_at?new Date(e.created_at).toLocaleString():'')+'</div><p class="desc">'+esc(e.message)+'</p><div class="meta">Qty: '+e.quantity+' • '+(e.fulfilment==='delivery'?'Delivery requested':'Pickup requested')+(e.delivery_address?' • '+esc(e.delivery_address):'')+'</div>'+(e.customer_phone?'<p><a href="tel:'+esc(e.customer_phone)+'">Call customer: '+esc(e.customer_phone)+'</a></p>':'')+'<button class="btn sm" data-a="openBizEnquiryChat" data-id="'+e.id+'">Message customer</button><div class="row2"><span class="pill">Order: '+esc(e.status)+'</span><span class="pill">Delivery: '+esc(deliveryLabel[e.delivery_status]||e.delivery_status||'Pending')+'</span></div>'+orderButtons+deliveryButtons+'<div class="row2" style="flex-wrap:wrap;margin-top:8px"><button class="btn sm alt" data-a="bizEnquiryTracking" data-id="'+e.id+'">Add tracking reference</button><button class="btn sm alt" data-a="bizEnquiryNote" data-id="'+e.id+'">Customer update note</button></div>'+(e.tracking_reference?'<p class="meta">Tracking: '+esc(e.tracking_reference)+'</p>':'')+(e.owner_note?'<p class="meta">Customer note: '+esc(e.owner_note)+'</p>':'')+'</article>';
   }).join('');
 }
 function myBusinessEnquiryItems() {
   if (!S.user) return '<div class="empty">Sign in to track enquiries you send to businesses.</div>';
   if (!S.myBusinessEnquiries.length) return '<div class="empty">You have not sent any business enquiries yet.</div>';
-  return S.myBusinessEnquiries.map(function(e){var b=by(S.businesses,e.business_id),p=by(S.products,e.product_id),dl={pending:'Pending',preparing:'Preparing',ready_for_pickup:'Ready for pickup',out_for_delivery:'Out for delivery',delivered:'Delivered',collected:'Collected',not_required:'Not required'};return '<article class="card" style="padding:12px;margin:8px 0"><b>'+esc(b?(b.trading_name||b.name):'PNG business')+'</b><div class="meta">'+esc(p?p.name:'General enquiry')+' • '+esc(e.created_at?new Date(e.created_at).toLocaleDateString():'')+'</div><p class="desc">'+esc(e.message)+'</p><div class="row2"><span class="pill">Order: '+esc(e.status)+'</span><span class="pill">Delivery: '+esc(dl[e.delivery_status]||e.delivery_status||'Pending')+'</span></div>'+(e.tracking_reference?'<p class="meta">Tracking reference: '+esc(e.tracking_reference)+'</p>':'')+(e.owner_note?'<p class="meta">Business update: '+esc(e.owner_note)+'</p>':'')+'</article>';}).join('');
+  return S.myBusinessEnquiries.map(function(e){var b=by(S.businesses,e.business_id),p=by(S.products,e.product_id),dl={pending:'Pending',preparing:'Preparing',ready_for_pickup:'Ready for pickup',out_for_delivery:'Out for delivery',delivered:'Delivered',collected:'Collected',not_required:'Not required'};return '<article class="card" style="padding:12px;margin:8px 0"><b>'+esc(b?(b.trading_name||b.name):'PNG business')+'</b><div class="meta">'+esc(p?p.name:'General enquiry')+' • '+esc(e.created_at?new Date(e.created_at).toLocaleDateString():'')+'</div><p class="desc">'+esc(e.message)+'</p><div class="row2"><span class="pill">Order: '+esc(e.status)+'</span><span class="pill">Delivery: '+esc(dl[e.delivery_status]||e.delivery_status||'Pending')+'</span></div>'+(e.tracking_reference?'<p class="meta">Tracking reference: '+esc(e.tracking_reference)+'</p>':'')+(e.owner_note?'<p class="meta">Business update: '+esc(e.owner_note)+'</p>':'')+'<button class="btn sm" data-a="openBizEnquiryChat" data-id="'+e.id+'">Message business</button></article>';}).join('');
 }
 function businessEnquiryModal(businessId, productId) {
   if (needLogin('Sign in to contact this business')) return;
@@ -2819,7 +2820,17 @@ apply: function (el) { var j = by(S.jobs, el.dataset.id); if (j) applyModal(j); 
 delJob: async function (el) { if (!confirm('Delete this job?')) return; var r = await q(db.from('jobs').delete().eq('id', el.dataset.id).select()); if (r.error || !(r.data || []).length) { toast('Could not delete'); return; } S.jobs = S.jobs.filter(function (j) { return String(j.id) !== String(el.dataset.id); }); closeModal(); render(true); toast('Job deleted'); },
 govGo: function (el) { var v = el.dataset.v; if (v === 'report') reportModal(); else if (v === 'feedback') feedbackModal(); else if (v === 'reports' && !S.user) { go('reports'); } else go(v); },
 office: function (el) { var d = DIR[Number(el.dataset.id)]; if (d) feedbackModal(d[0]); },
-openChat: function (el) { go('chat', { id: el.dataset.id, name: el.dataset.name }); },
+openChat: function (el) { go('chat', { id: el.dataset.id, name: el.dataset.name, enquiryId: el.dataset.enquiry ? Number(el.dataset.enquiry) : null }); },
+  openBizEnquiryChat: async function (el) {
+    if (!S.user) { toast('Sign in to open this conversation.'); return; }
+    var id=Number(el.dataset.id), e=by(S.businessInbox,id)||by(S.myBusinessEnquiries,id);
+    if(!e){toast('This enquiry could not be found. Refresh Business Connect and try again.');return;}
+    var b=by(S.businesses,e.business_id), customerSide=String(e.customer_id||'')===String(S.user.id);
+    var other=customerSide?(b&&b.owner):e.customer_id;
+    if(!other||String(other)===String(S.user.id)){toast('The other participant is not available for messaging.');return;}
+    var name=customerSide?(b?(b.trading_name||b.name):'Business'):((e.customer_name)||'Customer');
+    await loadMsgs(); go('chat',{id:other,name:name,enquiryId:id});
+  },
 vote: async function (el) {
   if (needLogin('Sign in to vote')) return;
   var id = el.dataset.id, v = S.votes[id] || (S.votes[id] = { n: 0, mine: false }), was = v.mine;
@@ -3035,7 +3046,12 @@ businessEnquiry: async function (f) {
    var businessId=Number(f.dataset.business), productId=f.dataset.product?Number(f.dataset.product):null, qty=Number(val(f,'quantity')), fulfilment=val(f,'fulfilment'), address=val(f,'delivery_address').trim();
    if(!businessId||!val(f,'customer_name').trim()||!val(f,'customer_phone').trim()||!val(f,'message').trim()||!Number.isInteger(qty)||qty<1||qty>100000||(fulfilment==='delivery'&&!address)){toast('Complete your name, phone, quantity, message and delivery address if requesting delivery.');return;}
    var row={business_id:businessId,product_id:productId,customer_id:S.user.id,customer_name:val(f,'customer_name').trim(),customer_phone:val(f,'customer_phone').trim(),message:val(f,'message').trim(),quantity:qty,fulfilment:fulfilment,delivery_address:address||null};
-   var r=await q(db.from('business_enquiries').insert(row).select().single()); if(r.error){toast('Could not send enquiry: '+r.error.message);return;} closeModal(); await loadBusinessEnquiries(); toast('Enquiry sent to the business. No payment was taken.'); if(stack[stack.length-1].n==='business')render(true);
+   var r=await q(db.from('business_enquiries').insert(row).select().single()); if(r.error){toast('Could not send enquiry: '+r.error.message);return;}
+   var biz=by(S.businesses,businessId), firstMessage=null;
+   if(biz&&biz.owner){var mr=await q(db.from('messages').insert({recipient:biz.owner,recipient_name:biz.trading_name||biz.name,sender_name:myName(),body:'Business enquiry #'+r.data.id+': '+row.message,business_enquiry_id:r.data.id}).select().single()); if(!mr.error&&mr.data){firstMessage=mr.data;S.msgs.push(mr.data);}else{console.warn('Enquiry saved but linked chat message was not sent:',mr.error&&mr.error.message);}}
+   closeModal(); await loadBusinessEnquiries();
+   if(firstMessage){go('chat',{id:biz.owner,name:biz.trading_name||biz.name,enquiryId:r.data.id});toast('Enquiry sent. Your business conversation is now open.');}
+   else{toast('Enquiry saved. Open Business Connect to message the business.');if(stack[stack.length-1].n==='business')render(true);}
  },
  product: async function (f) {
   if (!S.user) { toast('Sign in first.'); return; }
@@ -3066,7 +3082,9 @@ chat: async function (f) {
   var cur = stack[stack.length - 1], t = val(f, 'text'); if (!t || !S.user) return;
   f.elements.text.value = '';
   if (cur.n === 'chat') {
-    var r = await q(db.from('messages').insert({ recipient: cur.p.id, recipient_name: cur.p.name || null, sender_name: myName(), body: t }).select().single());
+    var msgRow = { recipient: cur.p.id, recipient_name: cur.p.name || null, sender_name: myName(), body: t };
+    if (cur.p.enquiryId) msgRow.business_enquiry_id = Number(cur.p.enquiryId);
+    var r = await q(db.from('messages').insert(msgRow).select().single());
     if (r.error) { toast('Message not sent: ' + r.error.message); f.elements.text.value = t; return; }
     S.msgs.push(r.data); paintChat();
   } else if (cur.n === 'cchat') {
