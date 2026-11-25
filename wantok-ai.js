@@ -198,15 +198,24 @@
           if (district) addContactLocation(liveData.locations.find(function(x){ return x.id === district.parent_id && x.location_type === "province"; }));
         }
       });
+      var hasLocalPhoneOrEmail = false;
+      var hasDistrictReferral = false;
       if (requestedDepartment) {
-        var hasLocalPhoneOrEmail = contactLocations.some(function(location){
+        hasLocalPhoneOrEmail = contactLocations.some(function(location){
           return liveData.districtContacts.some(function(contact){
             return contact.location_id === location.id &&
               (contact.department || "").toLowerCase() === requestedDepartment &&
               (contact.phone || contact.email);
           });
         });
-        if (!hasLocalPhoneOrEmail) {
+        hasDistrictReferral = contactLocations.some(function(location){
+          return liveData.districtContacts.some(function(contact){
+            return contact.location_id === location.id &&
+              (contact.department || "").toLowerCase() === "district administration referral" &&
+              (contact.phone || contact.email);
+          });
+        });
+        if (!hasLocalPhoneOrEmail && !hasDistrictReferral) {
           var nationalOffice = liveData.locations.find(function(item){
             return item.location_type === "province" && item.name === "National Capital District";
           });
@@ -215,7 +224,7 @@
       }
       contactLocations.forEach(function(hit){
         liveData.districtContacts.filter(function(contact){
-          return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment);
+          return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment || (!hasLocalPhoneOrEmail && (contact.department || "").toLowerCase() === "district administration referral"));
         }).forEach(function(contact){
           var label = hit.name + (hit.location_type === "province" ? (hit.name === "National Capital District" ? " (national headquarters)" : " (provincial contact)") : " (district contact)");
           var line = label + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
