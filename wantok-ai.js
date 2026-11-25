@@ -47,7 +47,22 @@
   }
   function appendMessage(role, text) {
     var area = document.getElementById("wantok-ai-messages");
-    var bubble = el("div", { className: "wantok-ai-msg " + role }, text);
+    var bubble = el("div", { className: "wantok-ai-msg " + role });
+    var value = String(text || "");
+    if (role === "assistant") {
+      var urlPattern = /https?:\\/\\/[^\\s)]+/g;
+      var last = 0, match;
+      while ((match = urlPattern.exec(value)) !== null) {
+        if (match.index > last) bubble.appendChild(document.createTextNode(value.slice(last, match.index)));
+        var link = el("a", { href: match[0], target: "_blank", rel: "noopener noreferrer" }, match[0]);
+        link.style.cssText = "color:#075fbd;text-decoration:underline;overflow-wrap:anywhere";
+        bubble.appendChild(link);
+        last = match.index + match[0].length;
+      }
+      if (last < value.length) bubble.appendChild(document.createTextNode(value.slice(last)));
+    } else {
+      bubble.textContent = value;
+    }
     area.appendChild(bubble);
     area.scrollTop = area.scrollHeight;
   }
@@ -118,9 +133,16 @@
       var ts=publicList(liveData.talents,function(x){return x.title+(x.category?" — "+x.category:"")+(x.owner_name?" — "+x.owner_name:"");},"There are currently no approved talent entries visible in the public records.");
       return tpi ? prefix+"Ol talent entry: \n"+ts : prefix+"Approved Talent entries currently visible:\n"+ts;
     }
-    if (/government|department|minister|district|dda|dsip|psip|treasury|service|office|passport|police|hospital/.test(q) || mode === "government") {
-      var gs=publicList(liveData.services,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
-      return tpi ? prefix+"Ol government sevis link i stap: \n"+gs+"\nPlis sekim official gavman opis bilong kisim nupela infomesen." : prefix+"Government-service links stored in WANTOK PNG:\n"+gs+"\nPlease verify current details with the responsible official office.";
+    if (/government|department|minister|district|dda|dsip|psip|treasury|service|office|passport|police|hospital|education|school|tax|irc|revenue|health|finance|bank|election|vote|court|justice|ombudsman|planning|fisheries|mining|petroleum|visa|passport|foreign affairs|consular|public service|statistics|census|digital portal/.test(q) || mode === "government") {
+      var words = q.split(/[^a-z0-9]+/).filter(function(w){ return w.length > 3; });
+      var matches = liveData.services.filter(function(x) {
+        var hay = (x.name+" "+(x.category||"")+" "+(x.description||"")).toLowerCase();
+        return words.some(function(w){ return hay.indexOf(w) >= 0; });
+      });
+      var selected = matches.length ? matches : liveData.services;
+      var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
+      var guidance = matches.length ? "I matched the closest department/service to your question." : "Here are the main official links currently in the directory. Tell me the department or service name to narrow the list.";
+      return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs;
     }
     if (/story|reel|live|video|photo|post|comment|message|inbox/.test(q) || mode === "community" || mode === "media") {
       var ps=publicList(liveData.posts,function(x){return x.title+(x.province?" — "+x.province:"")+(x.body?" — "+x.body.slice(0,130):"");},"No approved community posts are currently visible in the public feed records.");
