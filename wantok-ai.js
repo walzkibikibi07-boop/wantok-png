@@ -3,9 +3,6 @@
   if (window.__WANTOK_AI_WIDGET__) return;
   window.__WANTOK_AI_WIDGET__ = true;
 
-  var SB_URL = "https://rpcekiqhvsmzjmjimnsj.supabase.co";
-  var SB_KEY = "sb_publishable_bmR_OLpVkON13vH-uTCkRg_GGH8jllW";
-  var client = null;
   var history = [];
   var busy = false;
   var mode = "general";
@@ -189,9 +186,6 @@
     panel.appendChild(el("div", { id: "wantok-ai-foot" }, "Free built-in guidance, not live AI. Confirm official information with the responsible office."));
     document.body.appendChild(panel);
 
-    if (window.supabase && window.supabase.createClient) {
-      client = window.supabase.createClient(SB_URL, SB_KEY);
-    }
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
