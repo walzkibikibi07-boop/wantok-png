@@ -23,7 +23,7 @@
   }
   function addStyles() {
     var css = [
-      "#wantok-ai-launch{position:fixed;right:14px;bottom:104px;z-index:99980;background:#0d1b2e;color:#f5b800;border:2px solid #f5b800;border-radius:28px;padding:12px 16px;font-weight:900;font-size:14px;box-shadow:0 5px 18px #0004}",
+      "#wantok-ai-launch{position:fixed;right:14px;bottom:104px;z-index:99980;background:#0d1b2e;color:#f5b800;border:2px solid #f5b800;border-radius:28px;padding:12px 16px;font-weight:900;font-size:14px;box-shadow:0 5px 18px #0004;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}",
       "#wantok-ai-panel{position:fixed;right:10px;bottom:164px;z-index:99990;width:min(390px,calc(100vw - 20px));height:min(590px,calc(100dvh - 190px));min-height:350px;background:#fff;border-radius:18px;box-shadow:0 12px 45px #0005;display:none;overflow:hidden;font:14px Arial,sans-serif;color:#172033}",
       "#wantok-ai-panel.open{display:flex;flex-direction:column}",
       "#wantok-ai-head{background:#0d1b2e;color:#fff;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}",
@@ -328,7 +328,42 @@
     if (!document.body || document.getElementById("wantok-ai-launch")) return;
     addStyles();
     var launch = el("button", { id: "wantok-ai-launch", type: "button" }, "✨ WANTOK AI");
-    launch.addEventListener("click", show);
+    var dragState = null, movedDuringDrag = false, suppressClick = false;
+    launch.addEventListener("pointerdown", function (event) {
+      if (event.button !== undefined && event.button !== 0) return;
+      var rect = launch.getBoundingClientRect();
+      dragState = { id: event.pointerId, startX: event.clientX, startY: event.clientY,
+        left: rect.left, top: rect.top, moved: false };
+      movedDuringDrag = false;
+      launch.style.left = rect.left + "px";
+      launch.style.top = rect.top + "px";
+      launch.style.right = "auto";
+      launch.style.bottom = "auto";
+      try { launch.setPointerCapture(event.pointerId); } catch (_) {}
+    });
+    launch.addEventListener("pointermove", function (event) {
+      if (!dragState || event.pointerId !== dragState.id) return;
+      var dx = event.clientX - dragState.startX, dy = event.clientY - dragState.startY;
+      if (!dragState.moved && Math.hypot(dx, dy) < 7) return;
+      dragState.moved = true;
+      movedDuringDrag = true;
+      var maxLeft = Math.max(8, window.innerWidth - launch.offsetWidth - 8);
+      var maxTop = Math.max(8, window.innerHeight - launch.offsetHeight - 8);
+      launch.style.left = Math.max(8, Math.min(maxLeft, dragState.left + dx)) + "px";
+      launch.style.top = Math.max(8, Math.min(maxTop, dragState.top + dy)) + "px";
+    });
+    function finishDrag(event) {
+      if (!dragState || (event && event.pointerId !== dragState.id)) return;
+      suppressClick = dragState.moved;
+      dragState = null;
+      if (suppressClick) window.setTimeout(function () { suppressClick = false; }, 250);
+    }
+    launch.addEventListener("pointerup", finishDrag);
+    launch.addEventListener("pointercancel", finishDrag);
+    launch.addEventListener("click", function (event) {
+      if (suppressClick || movedDuringDrag) { event.preventDefault(); event.stopPropagation(); movedDuringDrag = false; return; }
+      show();
+    });
     document.body.appendChild(launch);
 
     var panel = el("section", { id: "wantok-ai-panel", "aria-label": "WANTOK AI assistant" });
