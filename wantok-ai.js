@@ -89,7 +89,7 @@
         db.from("businesses").select("name,category,location,province,town,description,phone,website,products,services").eq("status","approved").order("created_at",{ascending:false}).limit(6),
         db.from("products").select("name,description,price_kina,unit,in_stock,category_id").eq("in_stock",true).limit(8),
         db.from("talents").select("title,category,description,owner_name").eq("status","approved").order("created_at",{ascending:false}).limit(6),
-        db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(20),
+        db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(30),
         db.from("gov_locations").select("id,name,location_type,parent_id,region,official_source_url").order("name",{ascending:true}).limit(500), db.from("gov_district_contacts").select("location_id,department,office_name,contact_name,phone,email,website_url,source_url,verification_status,notes").order("department",{ascending:true}).limit(250)
       ]);
       liveData.posts = results[0].error ? [] : (results[0].data || []);
