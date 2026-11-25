@@ -98,8 +98,8 @@
     if (!liveData.ready) return "";
     if (/how many|count|available now|currently listed|what is listed|olsem hamas|hamas i stap/.test(q)) {
       return tpi
-        ? "Mi sekim ol public data long WANTOK PNG: "+liveData.posts.length+" community post (sample), "+liveData.jobs.length+" approved wok listing, "+liveData.businesses.length+" approved bisnis, "+liveData.products.length+" in-stock prodak, "+liveData.talents.length+" approved talent entry na "+liveData.services.length+" government service link i stap long public lookup."
-        : "I checked the public WANTOK PNG records currently available to the assistant: "+liveData.posts.length+" recent approved community posts, "+liveData.jobs.length+" approved job listings, "+liveData.businesses.length+" approved businesses, "+liveData.products.length+" in-stock products, "+liveData.talents.length+" approved talent entries, and "+liveData.services.length+" government-service links. These are the records returned to this assistant, not necessarily every record in the app.";
+        ? "Mi kisim sampela public data tasol: inap long 6 community post, 6 approved wok listing, 6 approved bisnis, 8 in-stock prodak, 6 approved talent entry na 20 government service link. Dispela em sampela rekod tasol, i no total kaun."
+        : "I loaded public samples from WANTOK PNG: up to 6 recent approved community posts, 6 approved job listings, 6 approved businesses, 8 in-stock products, 6 approved talent entries and 20 government-service links. These are capped samples, not total database counts.";
     }
     if (/market|sell|selling|buy|buyer|product|bilum|price|listing/.test(q) || mode === "market") {
       var p = publicList(liveData.products,function(x){return x.name+(x.price_kina!=null?" — K"+x.price_kina+(x.unit?" / "+x.unit:""):"")+(x.description?" — "+x.description:"");},"No in-stock product records are currently visible in the public Market data.");
