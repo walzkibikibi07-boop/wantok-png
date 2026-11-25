@@ -198,11 +198,26 @@
           if (district) addContactLocation(liveData.locations.find(function(x){ return x.id === district.parent_id && x.location_type === "province"; }));
         }
       });
+      if (requestedDepartment) {
+        var hasLocalPhoneOrEmail = contactLocations.some(function(location){
+          return liveData.districtContacts.some(function(contact){
+            return contact.location_id === location.id &&
+              (contact.department || "").toLowerCase() === requestedDepartment &&
+              (contact.phone || contact.email);
+          });
+        });
+        if (!hasLocalPhoneOrEmail) {
+          var nationalOffice = liveData.locations.find(function(item){
+            return item.location_type === "province" && item.name === "National Capital District";
+          });
+          addContactLocation(nationalOffice);
+        }
+      }
       contactLocations.forEach(function(hit){
         liveData.districtContacts.filter(function(contact){
           return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment);
         }).forEach(function(contact){
-          var label = hit.name + (hit.location_type === "province" ? " (provincial contact)" : " (district contact)");
+          var label = hit.name + (hit.location_type === "province" ? (hit.name === "National Capital District" ? " (national headquarters)" : " (provincial contact)") : " (district contact)");
           var line = label + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
           if (contact.contact_name) line += "; contact: " + contact.contact_name;
           if (contact.phone) line += "; phone: " + contact.phone;
@@ -214,7 +229,7 @@
           contactLines.push(line);
         });
       });
-      var contactText = contactLines.length ? "\\n\\nPublished local department contacts (check verification status and confirm details before visiting):\\n" + contactLines.join("\\n") : "";
+      var contactText = contactLines.length ? "\\n\\nPublished department contacts (check verification status and confirm details before visiting):\\n" + contactLines.join("\\n") : "";
       var districtGuidance = requestedDistrict
         ? "\\n\\nDistrict service connections: the department links below are official national department portals available to people across PNG. They are not proof of a staffed office in this district. Use the provincial/district administration contact directory above to confirm the nearest local office, officer and current contact details."
         : "";
