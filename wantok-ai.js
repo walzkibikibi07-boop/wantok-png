@@ -3,6 +3,10 @@
   if (window.__WANTOK_AI_WIDGET__) return;
   window.__WANTOK_AI_WIDGET__ = true;
 
+  var SB_URL = "https://rpcekiqhvsmzjmjimnsj.supabase.co";
+  var SB_KEY = "sb_publishable_bmR_OLpVkON13vH-uTCkRg_GGH8jllW";
+  var db = null;
+  var liveData = { posts: [], jobs: [], businesses: [], products: [], talents: [], services: [], ready: false };
   var history = [];
   var busy = false;
   var mode = "general";
@@ -61,10 +65,75 @@
   function hide() {
     document.getElementById("wantok-ai-panel").classList.remove("open");
   }
+  async function refreshLiveData() {
+    if (!db) return;
+    try {
+      var results = await Promise.all([
+        db.from("posts").select("title,body,kind,province,district,created_at").eq("status","approved").order("created_at",{ascending:false}).limit(6),
+        db.from("jobs").select("title,employer,location,province,job_type,closing_date,description").eq("status","approved").order("created_at",{ascending:false}).limit(6),
+        db.from("businesses").select("name,category,location,province,town,description,phone,website,products,services").eq("status","approved").order("created_at",{ascending:false}).limit(6),
+        db.from("products").select("name,description,price_kina,unit,in_stock,category_id").eq("in_stock",true).limit(8),
+        db.from("talents").select("title,category,description,owner_name").eq("status","approved").order("created_at",{ascending:false}).limit(6),
+        db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(20)
+      ]);
+      liveData.posts = results[0].error ? [] : (results[0].data || []);
+      liveData.jobs = results[1].error ? [] : (results[1].data || []);
+      liveData.businesses = results[2].error ? [] : (results[2].data || []);
+      liveData.products = results[3].error ? [] : (results[3].data || []);
+      liveData.talents = results[4].error ? [] : (results[4].data || []);
+      liveData.services = results[5].error ? [] : (results[5].data || []);
+      liveData.ready = results.some(function(r){ return !r.error; });
+      var status = document.getElementById("wantok-ai-live-status");
+      if (status) status.textContent = liveData.ready ? "● Connected to approved public WANTOK PNG records" : "● Live records unavailable · basic help remains available";
+    } catch (_) {
+      var status = document.getElementById("wantok-ai-live-status");
+      if (status) status.textContent = "● Live records unavailable · basic help remains available";
+    }
+  }
+  function publicList(items, mapper, emptyText) {
+    if (!items || !items.length) return emptyText;
+    return items.slice(0,5).map(function(item,i){ return (i+1)+". "+mapper(item); }).join("\\n");
+  }
+  function liveContextReply(q, tpi, prefix) {
+    if (!liveData.ready) return "";
+    if (/how many|count|available now|currently listed|what is listed|olsem hamas|hamas i stap/.test(q)) {
+      return tpi
+        ? "Mi sekim ol public data long WANTOK PNG: "+liveData.posts.length+" community post (sample), "+liveData.jobs.length+" approved wok listing, "+liveData.businesses.length+" approved bisnis, "+liveData.products.length+" in-stock prodak, "+liveData.talents.length+" approved talent entry na "+liveData.services.length+" government service link i stap long public lookup."
+        : "I checked the public WANTOK PNG records currently available to the assistant: "+liveData.posts.length+" recent approved community posts, "+liveData.jobs.length+" approved job listings, "+liveData.businesses.length+" approved businesses, "+liveData.products.length+" in-stock products, "+liveData.talents.length+" approved talent entries, and "+liveData.services.length+" government-service links. These are the records returned to this assistant, not necessarily every record in the app.";
+    }
+    if (/market|sell|selling|buy|buyer|product|bilum|price|listing/.test(q) || mode === "market") {
+      var p = publicList(liveData.products,function(x){return x.name+(x.price_kina!=null?" — K"+x.price_kina+(x.unit?" / "+x.unit:""):"")+(x.description?" — "+x.description:"");},"No in-stock product records are currently visible in the public Market data.");
+      var b = publicList(liveData.businesses,function(x){return x.name+(x.category?" ("+x.category+")":"")+(x.location||x.town?" — "+(x.location||x.town):"");},"No approved business records are currently visible.");
+      return tpi ? prefix+"Mi sekim public Market data bilong Wantok PNG. Ol prodak: \\n"+p+"\\nOl bisnis: \\n"+b : prefix+"I checked the live public Market records. In-stock products:\\n"+p+"\\nApproved businesses:\\n"+b;
+    }
+    if (/job|work|employment|vacancy|cv|resume|employer|career/.test(q) || mode === "jobs") {
+      var j=publicList(liveData.jobs,function(x){return x.title+(x.employer?" — "+x.employer:"")+(x.location||x.province?" — "+(x.location||x.province):"")+(x.closing_date?" — closes "+x.closing_date:"");},"There are currently no approved job listings visible in the connected public records. You can still check the Work section again later.");
+      return tpi ? prefix+"Ol approved wok listing mi painim: \\n"+j : prefix+"Approved job listings currently visible in the connected WANTOK PNG database:\\n"+j;
+    }
+    if (/business|register|registration|shop|store|company|customer|delivery|small business/.test(q) || mode === "business") {
+      var bs=publicList(liveData.businesses,function(x){return x.name+(x.category?" — "+x.category:"")+(x.location||x.town?" — "+(x.location||x.town):"")+(x.phone?" — "+x.phone:"");},"There are currently no approved public business listings visible to this assistant. Business owners can submit their details through Business Connect; listings may require approval.");
+      return tpi ? prefix+"Ol bisnis i stap long public list: \\n"+bs : prefix+"Approved businesses currently visible in Business Connect:\\n"+bs;
+    }
+    if (/talent|artist|music|sing|dance|creative|skill/.test(q) || mode === "talent") {
+      var ts=publicList(liveData.talents,function(x){return x.title+(x.category?" — "+x.category:"")+(x.owner_name?" — "+x.owner_name:"");},"There are currently no approved talent entries visible in the public records.");
+      return tpi ? prefix+"Ol talent entry: \\n"+ts : prefix+"Approved Talent entries currently visible:\\n"+ts;
+    }
+    if (/government|department|minister|district|dda|dsip|psip|treasury|service|office|passport|police|hospital/.test(q) || mode === "government") {
+      var gs=publicList(liveData.services,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
+      return tpi ? prefix+"Ol government sevis link i stap: \\n"+gs+"\\nPlis sekim official gavman opis bilong kisim nupela infomesen." : prefix+"Government-service links stored in WANTOK PNG:\\n"+gs+"\\nPlease verify current details with the responsible official office.";
+    }
+    if (/story|reel|live|video|photo|post|comment|message|inbox/.test(q) || mode === "community" || mode === "media") {
+      var ps=publicList(liveData.posts,function(x){return x.title+(x.province?" — "+x.province:"")+(x.body?" — "+x.body.slice(0,130):"");},"No approved community posts are currently visible in the public feed records.");
+      return tpi ? prefix+"Ol public community post: \\n"+ps : prefix+"Recent approved public community posts:\\n"+ps;
+    }
+    return "";
+  }
   function localReply(question) {
     var q = question.toLowerCase();
     var tpi = language === "tpi";
     var prefix = tpi ? "Gutpela askim, wantok! " : "Good question. ";
+    var liveAnswer = liveContextReply(q, tpi, prefix);
+    if (liveAnswer) return liveAnswer;
     if (/^(hi|hello|hey|halo|greetings|moning|apinun)/.test(q)) {
       return tpi ? "Halo wantok! Mi WANTOK AI bilong helpim yu. Yu laik save long Market, wok, bisnis, Talent, Wantok community o Government Connect?" : "Hello, wantok! I’m WANTOK AI, the built-in helper for this platform. What would you like help with—Market, jobs, business, Talent, community or Government Connect?";
     }
@@ -108,7 +177,7 @@
     var wait = el("div", { className: "wantok-ai-msg assistant", id: "wantok-ai-wait" }, "WANTOK AI is preparing a free-mode answer...");
     document.getElementById("wantok-ai-messages").appendChild(wait);
     try {
-      await new Promise(function (resolve) { window.setTimeout(resolve, 220); });
+      await refreshLiveData();
       var answer = localReply(text);
       var waitNode = document.getElementById("wantok-ai-wait");
       if (waitNode) waitNode.remove();
@@ -141,7 +210,7 @@
     head.appendChild(close);
     panel.appendChild(head);
 
-    var controls = el("div", { id: "wantok-ai-controls" });
+    var liveStatus = el("div", { id: "wantok-ai-live-status" }, "● Connecting to public WANTOK PNG records...");\n    liveStatus.style.cssText = "font-size:11px;color:#64748b;padding:6px 12px;background:#fff";\n    panel.appendChild(liveStatus);\n\n    var controls = el("div", { id: "wantok-ai-controls" });
     var modeSelect = el("select", { "aria-label": "AI topic" });
     [
       ["general", "All WANTOK PNG"],
@@ -185,8 +254,7 @@
     panel.appendChild(compose);
     panel.appendChild(el("div", { id: "wantok-ai-foot" }, "Free built-in guidance, not live AI. Confirm official information with the responsible office."));
     document.body.appendChild(panel);
-
-  }
+    if (window.supabase && window.supabase.createClient) {\n      db = window.supabase.createClient(SB_URL, SB_KEY);\n      refreshLiveData();\n    } else {\n      var status = document.getElementById("wantok-ai-live-status");\n      if (status) status.textContent = "● Public database connection unavailable · basic help remains available";\n    }\n\n  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
 })();
