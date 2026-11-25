@@ -107,9 +107,9 @@
       if (status) status.textContent = "● Live records unavailable · basic help remains available";
     }
   }
-  function publicList(items, mapper, emptyText) {
+  function publicList(items, mapper, emptyText, limit) {
     if (!items || !items.length) return emptyText;
-    return items.slice(0,5).map(function(item,i){ return (i+1)+". "+mapper(item); }).join("\n");
+    return items.slice(0, limit || 5).map(function(item,i){ return (i+1)+". "+mapper(item); }).join("\n");
   }
   function liveContextReply(q, tpi, prefix) {
     if (!liveData.ready) return "";
@@ -142,7 +142,8 @@
         return words.some(function(w){ return hay.indexOf(w) >= 0; });
       });
       var selected = matches.length ? matches : liveData.services;
-      var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
+      var requestedDistrict = liveData.locations.some(function(item){ return item.location_type === "district" && locationNameMatch(item); });
+      var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.", requestedDistrict ? 24 : 5);
       function locationNameMatch(item) {
         var name = item.name.toLowerCase().replace(/\\s+(province|district|llg)$/,"").trim();
         if (name.length < 3) return false;
@@ -164,7 +165,19 @@
           liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "llg"; }).forEach(function(l){ locationLines.push("  LLG: "+l.name); });
         }
       });
-      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nDirectory source: Open Admin Data (CC BY 4.0), cross-check with the relevant Provincial or District Administration. Contact details are not included unless separately verified." : "";
+      var portalLines = [];
+      locationHits.forEach(function(hit){
+        var parent = liveData.locations.find(function(x){ return x.id === hit.parent_id; });
+        var portal = hit.official_source_url || (parent && parent.official_source_url);
+        if (portal && (hit.location_type === "district" || hit.location_type === "province")) {
+          portalLines.push((hit.location_type === "district" ? hit.name+" district administration / provincial contact directory" : hit.name+" provincial administration")+" — "+portal);
+        }
+      });
+      var districtGuidance = requestedDistrict
+        ? "\\n\\nDistrict service connections: the department links below are official national department portals available to people across PNG. They are not proof of a staffed office in this district. Use the provincial/district administration contact directory above to confirm the nearest local office, officer and current contact details."
+        : "";
+      var portalText = portalLines.length ? "\\n\\nOfficial provincial / district contact directory:\\n"+portalLines.join("\\n") : "";
+      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nDirectory source: Open Admin Data (CC BY 4.0), cross-check with the relevant Provincial or District Administration. Contact details are not included unless separately verified."+portalText+districtGuidance : portalText+districtGuidance;
       var guidance = matches.length ? "I matched the closest department/service to your question." : "Here are the main official links currently in the directory. Tell me the department or service name to narrow the list.";
       return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs+locationText : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs+locationText;
     }
