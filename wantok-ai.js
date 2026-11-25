@@ -64,46 +64,63 @@
   function hide() {
     document.getElementById("wantok-ai-panel").classList.remove("open");
   }
+  function localReply(question) {
+    var q = question.toLowerCase();
+    var tpi = language === "tpi";
+    var prefix = tpi ? "Gutpela askim, wantok! " : "Good question. ";
+    if (/^(hi|hello|hey|halo|greetings|moning|apinun)/.test(q)) {
+      return tpi ? "Halo wantok! Mi WANTOK AI bilong helpim yu. Yu laik save long Market, wok, bisnis, Talent, Wantok community o Government Connect?" : "Hello, wantok! I’m WANTOK AI, the built-in helper for this platform. What would you like help with—Market, jobs, business, Talent, community or Government Connect?";
+    }
+    if (/tok pisin|translate|translation|meaning/.test(q)) {
+      return tpi ? "Mi inap helpim long ol isi Tok Pisin toktok na mining bilong ol tok. Salim tok o sentens yu laik mi eksplenim." : "I can help explain simple Tok Pisin phrases and meanings. Send me the word or sentence you want explained.";
+    }
+    if (/market|sell|selling|buy|buyer|product|bilum|price|listing/.test(q) || mode === "market") {
+      return tpi ? prefix + "Long Market, yu ken putim ol samting yu salim, piksa, prais long Kina, ples na kontak. Raitim klia nem bilong prodak, prais, hamas i stap na hau long kisim. Skelim gut man o meri yu no save long en taim yu stretim peimen." : prefix + "In Market, create a clear listing with product photos, price in kina, location, quantity and contact details. Keep the price and delivery terms clear, and take care when arranging payment with people you don’t know.";
+    }
+    if (/job|work|employment|vacancy|cv|resume|employer|career/.test(q) || mode === "jobs") {
+      return tpi ? prefix + "Long Work, painim wok o putim wok i stap. Lukim gut nem bilong kampani, ples bilong wok, mak bilong save na deadline. No ken baim mani long kisim wok sapos yu no sekim gut." : prefix + "In Work & Jobs, browse vacancies or post a job with the employer name, location, requirements, pay details where available and closing date. Verify the employer and never pay an unverified recruiter to get a job.";
+    }
+    if (/business|register|registration|shop|store|company|customer|delivery|small business/.test(q) || mode === "business") {
+      return tpi ? prefix + "Long Business Connect, bisnis i ken soim nem, wanem samting em i salim, ples, fon na delivery sapos em i gat. Putim stretpela infomesen na toktok wantaim ol kastoma long WANTOK PNG." : prefix + "Business Connect helps local businesses present their name, products or services, location, contact details and delivery options. Keep business information accurate and respond clearly to customers. Check the relevant PNG authorities for formal registration requirements.";
+    }
+    if (/talent|artist|music|sing|dance|creative|skill|video/.test(q) || mode === "talent") {
+      return tpi ? prefix + "Long Talent, soim save bilong yu long piksa, vidio o stori. Tokaut long wanem kain wok yu save mekim na hau ol manmeri inap kontakim yu. Yu mas kisim tok orait bipo yu postim piksa bilong narapela." : prefix + "Use Talent to showcase your skills through photos, videos or a short description. Explain what you do and how people can contact you. Get permission before posting someone else’s image or work.";
+    }
+    if (/government|department|minister|district|dda|dsip|psip|treasury|service|office|passport|police|hospital/.test(q) || mode === "government") {
+      return tpi ? prefix + "Government Connect i helpim yu long painim ol link na infomesen bilong gavman. Sekim ol official website o go stret long ofis bilong gavman bilong kisim laspela infomesen. WANTOK PNG i no gavman ofis na em i no inap garanti long approval bilong aplikesen." : prefix + "Government Connect is intended to help people find government departments, services and official information. Confirm current requirements, fees and application status directly with the responsible government office or its official website. WANTOK PNG is not a government authority and cannot approve applications.";
+    }
+    if (/safe|scam|fraud|report|harass|abuse|threat|emergency|danger/.test(q) || mode === "safety") {
+      return tpi ? prefix + "Sapos yu stap long bikpela danger, go long ples i gat seifti na ringim polis o lokal emergency help kwiktaim. No ken salim password, PIN o bank code long wanpela man. Holim evidens bilong scam na ripotim long stretpela autoriti." : prefix + "If someone is in immediate danger, move to a safer place and contact local police or emergency services. Never share passwords, PINs or banking codes. Keep evidence of suspected scams and report them to the relevant platform or authority.";
+    }
+    if (/story|reel|live|video|photo|post|comment|message|inbox/.test(q) || mode === "community" || mode === "media") {
+      return tpi ? prefix + "Long Wantok community, yu ken serim stori, piksa, vidio na toktok wantaim ol narapela. Bipo yu post, sekim gut infomesen na kisim tok orait bilong ol manmeri i stap long piksa. Yusim report sapos yu lukim samting i no stret." : prefix + "In Wantok community, you can share posts, photos, videos and comments, and connect with other members. Check information before sharing, get consent from people shown in photos, and use reporting tools for harmful content.";
+    }
+    if (/how|help|what can|features|use wantok|wantok png/.test(q) || mode === "general") {
+      return tpi ? "WANTOK PNG em i digital ples bilong PNG long bungim ol manmeri, bisnis na gavman sevis. Yu ken yusim Market bilong salim na baim, Work bilong painim wok, Business Connect, Talent, Wantok community na Government Connect. Makim wanpela topik antap na askim mi." : "WANTOK PNG brings people, businesses and government-service information together. You can explore Market, Work & Jobs, Business Connect, Talent, Wantok community and Government Connect. Choose a topic above and ask a specific question.";
+    }
+    return tpi ? "Mi stap long Free Mode nau. Mi inap helpim long ol isi askim bilong WANTOK PNG, tasol mi no gat live AI search o live data yet. Traim askim long Market, Work, Business, Talent, Community, Safety o Government Connect." : "I’m running in Free Mode. I can help with basic WANTOK PNG guidance, but I don’t have live AI search or live platform data enabled. Try asking about Market, Work, Business, Talent, Community, Safety or Government Connect.";
+  }
   async function send() {
     var input = document.getElementById("wantok-ai-input");
     var text = input.value.trim();
     if (!text || busy) return;
-    if (!client) {
-      appendMessage("assistant", "AI service could not start. Please refresh WANTOK PNG and try again.");
-      return;
-    }
-    var sessionResult = await client.auth.getSession();
-    if (!sessionResult.data || !sessionResult.data.session) {
-      appendMessage("assistant", "Please sign in to your WANTOK PNG account before using WANTOK AI.");
-      return;
-    }
     input.value = "";
     history.push({ role: "user", content: text });
     appendMessage("user", text);
     setBusy(true);
-    var wait = el("div", { className: "wantok-ai-msg assistant", id: "wantok-ai-wait" }, "WANTOK AI is thinking...");
+    var wait = el("div", { className: "wantok-ai-msg assistant", id: "wantok-ai-wait" }, "WANTOK AI is preparing a free-mode answer...");
     document.getElementById("wantok-ai-messages").appendChild(wait);
     try {
-      var result = await client.functions.invoke("wantok-chat", {
-        body: { mode: mode, language: language, messages: history.slice(-12) }
-      });
+      await new Promise(function (resolve) { window.setTimeout(resolve, 220); });
+      var answer = localReply(text);
       var waitNode = document.getElementById("wantok-ai-wait");
       if (waitNode) waitNode.remove();
-      if (result.error) {
-        var message = result.data && result.data.error ? result.data.error : "AI connection failed. Please try again.";
-        if (result.error.context && result.error.context.json) {
-          try { var detail = await result.error.context.json(); if (detail.error) message = detail.error; } catch (_) {}
-        }
-        appendMessage("assistant", message);
-      } else {
-        var answer = result.data && result.data.reply ? result.data.reply : "No answer received. Please try again.";
-        history.push({ role: "assistant", content: answer });
-        appendMessage("assistant", answer);
-      }
+      history.push({ role: "assistant", content: answer });
+      appendMessage("assistant", answer);
     } catch (error) {
       var pending = document.getElementById("wantok-ai-wait");
       if (pending) pending.remove();
-      appendMessage("assistant", "Connection problem. Check your internet and try again.");
+      appendMessage("assistant", "Sorry wantok, something went wrong. Please try again.");
     } finally {
       setBusy(false);
       input.focus();
@@ -120,7 +137,7 @@
     var head = el("div", { id: "wantok-ai-head" });
     var heading = el("div");
     heading.appendChild(el("strong", {}, "🇵🇬 WANTOK AI"));
-    heading.appendChild(el("div", {}, "Your PNG digital assistant"));
+    heading.appendChild(el("div", {}, "Your PNG digital helper · Free Mode"));
     head.appendChild(heading);
     var close = el("button", { id: "wantok-ai-close", type: "button", "aria-label": "Close" }, "×");
     close.addEventListener("click", hide);
@@ -156,7 +173,7 @@
     panel.appendChild(controls);
 
     var messages = el("div", { id: "wantok-ai-messages" });
-    messages.appendChild(el("div", { className: "wantok-ai-msg assistant" }, "Halo wantok! Mi stap hia bilong helpim yu long Market, Work, Business, Talent, Wantok na Government Connect. Askim mi long Tok Pisin o English."));
+    messages.appendChild(el("div", { className: "wantok-ai-msg assistant" }, "Halo wantok! Mi WANTOK AI long Free Mode. Mi inap givim ol isi tok help long Market, Work, Business, Talent, Wantok na Government Connect. Askim mi long Tok Pisin o English."));
     panel.appendChild(messages);
 
     var compose = el("div", { id: "wantok-ai-compose" });
@@ -169,7 +186,7 @@
     compose.appendChild(input);
     compose.appendChild(sendButton);
     panel.appendChild(compose);
-    panel.appendChild(el("div", { id: "wantok-ai-foot" }, "AI answers can be wrong. Confirm official information with the responsible office."));
+    panel.appendChild(el("div", { id: "wantok-ai-foot" }, "Free built-in guidance, not live AI. Confirm official information with the responsible office."));
     document.body.appendChild(panel);
 
     if (window.supabase && window.supabase.createClient) {
