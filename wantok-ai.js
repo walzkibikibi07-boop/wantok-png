@@ -6,7 +6,7 @@
   var SB_URL = "https://rpcekiqhvsmzjmjimnsj.supabase.co";
   var SB_KEY = "sb_publishable_bmR_OLpVkON13vH-uTCkRg_GGH8jllW";
   var db = null;
-  var liveData = { posts: [], jobs: [], businesses: [], products: [], talents: [], services: [], ready: false };
+  var liveData = { posts: [], jobs: [], businesses: [], products: [], talents: [], services: [], locations: [], ready: false };
   var history = [];
   var busy = false;
   var mode = "general";
@@ -89,7 +89,8 @@
         db.from("businesses").select("name,category,location,province,town,description,phone,website,products,services").eq("status","approved").order("created_at",{ascending:false}).limit(6),
         db.from("products").select("name,description,price_kina,unit,in_stock,category_id").eq("in_stock",true).limit(8),
         db.from("talents").select("title,category,description,owner_name").eq("status","approved").order("created_at",{ascending:false}).limit(6),
-        db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(20)
+        db.from("gov_services").select("name,description,url,category").order("sort",{ascending:true}).limit(20),
+        db.from("gov_locations").select("id,name,location_type,parent_id,region,official_source_url").order("name",{ascending:true}).limit(500)
       ]);
       liveData.posts = results[0].error ? [] : (results[0].data || []);
       liveData.jobs = results[1].error ? [] : (results[1].data || []);
@@ -97,6 +98,7 @@
       liveData.products = results[3].error ? [] : (results[3].data || []);
       liveData.talents = results[4].error ? [] : (results[4].data || []);
       liveData.services = results[5].error ? [] : (results[5].data || []);
+      liveData.locations = results[6].error ? [] : (results[6].data || []);
       liveData.ready = results.some(function(r){ return !r.error; });
       var status = document.getElementById("wantok-ai-live-status");
       if (status) status.textContent = liveData.ready ? "● Connected to approved public WANTOK PNG records" : "● Live records unavailable · basic help remains available";
@@ -141,8 +143,22 @@
       });
       var selected = matches.length ? matches : liveData.services;
       var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
+      var locationHits = liveData.locations.filter(function(x){ return q.indexOf(x.name.toLowerCase()) >= 0 || (x.name.toLowerCase().indexOf("northern (oro)") >= 0 && /\\boro\\b/.test(q)); });
+      var locationLines = [];
+      locationHits.slice(0,8).forEach(function(hit){
+        var parent = liveData.locations.find(function(x){ return x.id === hit.parent_id; });
+        var grand = parent ? liveData.locations.find(function(x){ return x.id === parent.parent_id; }) : null;
+        var path = [grand && grand.name, parent && parent.name, hit.name].filter(Boolean).join(" > ");
+        locationLines.push(path + (hit.region ? " ("+hit.region+" Region)" : ""));
+        if (hit.location_type === "province") {
+          liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "district"; }).forEach(function(d){ locationLines.push("  District: "+d.name); });
+        } else if (hit.location_type === "district") {
+          liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "llg"; }).forEach(function(l){ locationLines.push("  LLG: "+l.name); });
+        }
+      });
+      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nSource: PNG Department of Finance directory. Check with the relevant administration for current office contacts." : "";
       var guidance = matches.length ? "I matched the closest department/service to your question." : "Here are the main official links currently in the directory. Tell me the department or service name to narrow the list.";
-      return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs;
+      return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs+locationText : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs+locationText;
     }
     if (/story|reel|live|video|photo|post|comment|message|inbox/.test(q) || mode === "community" || mode === "media") {
       var ps=publicList(liveData.posts,function(x){return x.title+(x.province?" — "+x.province:"")+(x.body?" — "+x.body.slice(0,130):"");},"No approved community posts are currently visible in the public feed records.");
