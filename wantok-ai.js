@@ -92,7 +92,7 @@
   }
   function publicList(items, mapper, emptyText) {
     if (!items || !items.length) return emptyText;
-    return items.slice(0,5).map(function(item,i){ return (i+1)+". "+mapper(item); }).join("\\n");
+    return items.slice(0,5).map(function(item,i){ return (i+1)+". "+mapper(item); }).join("\n");
   }
   function liveContextReply(q, tpi, prefix) {
     if (!liveData.ready) return "";
@@ -104,27 +104,27 @@
     if (/market|sell|selling|buy|buyer|product|bilum|price|listing/.test(q) || mode === "market") {
       var p = publicList(liveData.products,function(x){return x.name+(x.price_kina!=null?" — K"+x.price_kina+(x.unit?" / "+x.unit:""):"")+(x.description?" — "+x.description:"");},"No in-stock product records are currently visible in the public Market data.");
       var b = publicList(liveData.businesses,function(x){return x.name+(x.category?" ("+x.category+")":"")+(x.location||x.town?" — "+(x.location||x.town):"");},"No approved business records are currently visible.");
-      return tpi ? prefix+"Mi sekim public Market data bilong Wantok PNG. Ol prodak: \\n"+p+"\\nOl bisnis: \\n"+b : prefix+"I checked the live public Market records. In-stock products:\\n"+p+"\\nApproved businesses:\\n"+b;
+      return tpi ? prefix+"Mi sekim public Market data bilong Wantok PNG. Ol prodak: \n"+p+"\nOl bisnis: \n"+b : prefix+"I checked the live public Market records. In-stock products:\n"+p+"\nApproved businesses:\n"+b;
     }
     if (/job|work|employment|vacancy|cv|resume|employer|career/.test(q) || mode === "jobs") {
       var j=publicList(liveData.jobs,function(x){return x.title+(x.employer?" — "+x.employer:"")+(x.location||x.province?" — "+(x.location||x.province):"")+(x.closing_date?" — closes "+x.closing_date:"");},"There are currently no approved job listings visible in the connected public records. You can still check the Work section again later.");
-      return tpi ? prefix+"Ol approved wok listing mi painim: \\n"+j : prefix+"Approved job listings currently visible in the connected WANTOK PNG database:\\n"+j;
+      return tpi ? prefix+"Ol approved wok listing mi painim: \n"+j : prefix+"Approved job listings currently visible in the connected WANTOK PNG database:\n"+j;
     }
     if (/business|register|registration|shop|store|company|customer|delivery|small business/.test(q) || mode === "business") {
       var bs=publicList(liveData.businesses,function(x){return x.name+(x.category?" — "+x.category:"")+(x.location||x.town?" — "+(x.location||x.town):"")+(x.phone?" — "+x.phone:"");},"There are currently no approved public business listings visible to this assistant. Business owners can submit their details through Business Connect; listings may require approval.");
-      return tpi ? prefix+"Ol bisnis i stap long public list: \\n"+bs : prefix+"Approved businesses currently visible in Business Connect:\\n"+bs;
+      return tpi ? prefix+"Ol bisnis i stap long public list: \n"+bs : prefix+"Approved businesses currently visible in Business Connect:\n"+bs;
     }
     if (/talent|artist|music|sing|dance|creative|skill/.test(q) || mode === "talent") {
       var ts=publicList(liveData.talents,function(x){return x.title+(x.category?" — "+x.category:"")+(x.owner_name?" — "+x.owner_name:"");},"There are currently no approved talent entries visible in the public records.");
-      return tpi ? prefix+"Ol talent entry: \\n"+ts : prefix+"Approved Talent entries currently visible:\\n"+ts;
+      return tpi ? prefix+"Ol talent entry: \n"+ts : prefix+"Approved Talent entries currently visible:\n"+ts;
     }
     if (/government|department|minister|district|dda|dsip|psip|treasury|service|office|passport|police|hospital/.test(q) || mode === "government") {
       var gs=publicList(liveData.services,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
-      return tpi ? prefix+"Ol government sevis link i stap: \\n"+gs+"\\nPlis sekim official gavman opis bilong kisim nupela infomesen." : prefix+"Government-service links stored in WANTOK PNG:\\n"+gs+"\\nPlease verify current details with the responsible official office.";
+      return tpi ? prefix+"Ol government sevis link i stap: \n"+gs+"\nPlis sekim official gavman opis bilong kisim nupela infomesen." : prefix+"Government-service links stored in WANTOK PNG:\n"+gs+"\nPlease verify current details with the responsible official office.";
     }
     if (/story|reel|live|video|photo|post|comment|message|inbox/.test(q) || mode === "community" || mode === "media") {
       var ps=publicList(liveData.posts,function(x){return x.title+(x.province?" — "+x.province:"")+(x.body?" — "+x.body.slice(0,130):"");},"No approved community posts are currently visible in the public feed records.");
-      return tpi ? prefix+"Ol public community post: \\n"+ps : prefix+"Recent approved public community posts:\\n"+ps;
+      return tpi ? prefix+"Ol public community post: \n"+ps : prefix+"Recent approved public community posts:\n"+ps;
     }
     return "";
   }
@@ -254,7 +254,15 @@
     panel.appendChild(compose);
     panel.appendChild(el("div", { id: "wantok-ai-foot" }, "Free built-in guidance, not live AI. Confirm official information with the responsible office."));
     document.body.appendChild(panel);
-    if (window.supabase && window.supabase.createClient) {\n      db = window.supabase.createClient(SB_URL, SB_KEY);\n      refreshLiveData();\n    } else {\n      var status = document.getElementById("wantok-ai-live-status");\n      if (status) status.textContent = "● Public database connection unavailable · basic help remains available";\n    }\n\n  }
+    if (window.supabase && window.supabase.createClient) {
+      db = window.supabase.createClient(SB_URL, SB_KEY);
+      refreshLiveData();
+    } else {
+      var status = document.getElementById("wantok-ai-live-status");
+      if (status) status.textContent = "● Public database connection unavailable · basic help remains available";
+    }
+
+  }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
 })();
