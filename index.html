@@ -2354,7 +2354,25 @@ function profileModal(first) {
 }
 function newPostModal(kind) {
   if (needLogin('Sign in to post')) return;
-  sheet(kind === 'video' ? 'New Video' : 'New Post', '<form data-form="post"><div class="field"><textarea name="text" rows="4" placeholder="' + esc(T("What's happening in your village?")) + '" maxlength="2000"></textarea></div><div class="field"><label class="l">Who is this for?</label><select name="scope"><option value="district">My district</option><option value="province">My province</option><option value="png" selected>All PNG</option></select></div>' + postMediaField(kind) + '<button class="btn">Post</button></form>');
+  var place = [loc().district, loc().province].filter(Boolean).join(', ') || 'Papua New Guinea';
+  var mediaLabel = kind === 'video' ? 'Choose a video' : 'Add photo or video';
+  var mediaAccept = kind === 'video' ? 'video/*' : 'image/*,video/*';
+  var body = '<form data-form="post" class="flash-post-form">'
+    + '<div style="display:flex;align-items:center;gap:11px;padding:13px 14px;background:linear-gradient(120deg,#0d1b2e,#173c62);border-radius:16px;color:#fff;margin-bottom:14px">'
+    + av(myName(), '#dce8f5', 46) + '<div style="min-width:0;flex:1"><b style="display:block;font-size:15px">' + esc(myName()) + '</b><small style="color:#dce8f5">Create a post for your wantoks</small></div><span style="color:#f5b800;font-size:11px;font-weight:900;letter-spacing:1px">FLASH</span></div>'
+    + '<div class="field"><textarea name="text" rows="5" placeholder="' + esc(T("What would you like to share with Papua New Guinea?")) + '" maxlength="2000" style="min-height:118px;font-size:17px;border:0;background:#f5f8fc;border-radius:16px;padding:15px;resize:vertical"></textarea><small class="note">Share an update, story, announcement or question. Hashtags can be added in your caption.</small></div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0">'
+    + '<label class="pick" style="display:flex;align-items:center;justify-content:center;gap:7px;min-height:52px;border:1px solid #cfe3d8;background:#f0fbf5;color:#147b4b;border-radius:14px;font-weight:800">📷 Photo / video<input type="file" accept="' + mediaAccept + '" data-photo hidden></label>'
+    + '<div style="display:flex;align-items:center;justify-content:center;gap:7px;min-height:52px;border:1px solid #f0d58a;background:#fff9e9;color:#8a5a00;border-radius:14px;font-size:13px;font-weight:800">📍 ' + esc(place) + '</div></div>'
+    + '<div class="pv" style="display:none;margin:10px 0;border-radius:15px;overflow:hidden"></div>'
+    + '<div style="border:1px solid #e3eaf2;border-radius:16px;padding:13px;margin:13px 0;background:#fff">'
+    + '<label class="l" style="display:block;margin-bottom:8px">🌐 Who can see your post?</label>'
+    + '<select name="scope" style="width:100%;min-height:46px;border:1px solid #d8e1eb;border-radius:12px;padding:10px 12px;background:#f7f9fc;font-weight:700"><option value="district">My district</option><option value="province">My province</option><option value="png" selected>🇵🇬 All Papua New Guinea</option></select>'
+    + '<small class="note">Choose the community audience for this post.</small></div>'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0;color:#65758a;font-size:12px"><span>✨ Modern post studio</span><span>•</span><span>Up to 2,000 caption characters</span><span>•</span><span>Photo or video</span></div>'
+    + '<button class="btn" style="width:100%;min-height:52px;border:0;border-radius:15px;background:linear-gradient(100deg,#d62828,#f08a00);box-shadow:0 7px 18px rgba(214,40,40,.22);font-size:16px;font-weight:900">🚀 Publish Post</button>'
+    + '</form>';
+  sheet('WANTOK PNG • FLASH POST STUDIO', body);
 }
 function sellModal() {
   if (needLogin('Sign in to sell')) return;
