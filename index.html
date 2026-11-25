@@ -1310,7 +1310,7 @@ async function loadBusinessEnquiries() {
   if (!S.user) return;
   var mine = S.businesses.filter(function (b) { return b.owner === S.user.id; }).map(function (b) { return b.id; });
   if (mine.length) { var inbox = await q(db.from('business_enquiries').select('id,business_id,product_id,customer_id,customer_name,customer_phone,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').in('business_id', mine).order('created_at', { ascending: false }).limit(100)); if (inbox.data) S.businessInbox = inbox.data; }
-  var own = await q(db.from('business_enquiries').select('id,business_id,product_id,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').eq('customer_id', S.user.id).order('created_at', { ascending: false }).limit(100));
+  var own = await q(db.from('business_enquiries').select('id,business_id,product_id,customer_id,message,quantity,fulfilment,delivery_address,status,delivery_status,tracking_reference,owner_note,created_at').eq('customer_id', S.user.id).order('created_at', { ascending: false }).limit(100));
   if (own.data) S.myBusinessEnquiries = own.data;
 }
 async function loadListings() {
