@@ -145,9 +145,9 @@
       var requestedDistrict = liveData.locations.some(function(item){ return item.location_type === "district" && locationNameMatch(item); });
       var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.", requestedDistrict ? 24 : 5);
       function locationNameMatch(item) {
-        var name = item.name.toLowerCase().replace(/\\s+(province|district|llg)$/,"").trim();
+        var name = item.name.toLowerCase().replace(/\s+(province|district|llg)$/,"").trim();
         if (name.length < 3) return false;
-        return q.indexOf(name) >= 0 || (name.indexOf("northern (oro)") >= 0 && /\\boro\\b/.test(q));
+        return q.indexOf(name) >= 0 || (name.indexOf("northern (oro)") >= 0 && /\boro\b/.test(q)) || (name.indexOf("chimbu (simbu)") >= 0 && /\bsimbu\b/.test(q));
       }
       var locationHits = liveData.locations.filter(locationNameMatch);
       var locationLines = [];
@@ -174,7 +174,15 @@
         }
       });
       var contactLines = [];
-      var requestedDepartment = /\\b(health|hospital|clinic|medical|pha)\\b/.test(q) ? "health" : (/\\b(finance|treasury)\\b/.test(q) ? "finance" : "");
+      var requestedDepartment = "";
+      if (/\b(health|hospital|clinic|medical|pha)\b/.test(q)) requestedDepartment = "health";
+      else if (/\b(finance|treasury)\b/.test(q)) requestedDepartment = "finance";
+      else if (/\b(education|school|teacher|teachers)\b/.test(q)) requestedDepartment = "education";
+      else if (/\b(police|constabulary|law enforcement|rpngc)\b/.test(q)) requestedDepartment = "police";
+      else if (/\b(agriculture|livestock|farming|farmer|primary industries)\b/.test(q)) requestedDepartment = "agriculture";
+      else if (/\b(works|road|roads|highway|highways|transport|bridge|bridges)\b/.test(q)) requestedDepartment = "works";
+      else if (/\b(land|lands|physical planning|land title|survey)\b/.test(q)) requestedDepartment = "lands";
+      else if (/\b(community development|religion|youth|welfare|social services)\b/.test(q)) requestedDepartment = "community development";
       locationHits.filter(function(hit){ return hit.location_type === "district" || hit.location_type === "province"; }).forEach(function(hit){
         liveData.districtContacts.filter(function(contact){
           return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment);
@@ -185,6 +193,7 @@
           if (contact.email) line += "; email: " + contact.email;
           if (contact.website_url) line += "; website: " + contact.website_url;
           if (contact.source_url) line += "; source: " + contact.source_url;
+          if (contact.verification_status) line += "; status: " + contact.verification_status;
           if (contact.notes) line += "; note: " + contact.notes;
           contactLines.push(line);
         });
