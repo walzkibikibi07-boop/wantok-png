@@ -10,7 +10,7 @@
     ':root{--wk-top:56px;--wk-nav:62px}',
     '.phone{padding-top:var(--wk-top)!important}',
     '#tabs{display:none!important}',
-    '.sh{top:var(--wk-top)!important}',
+    '.sh{top:0!important;position:relative!important;margin-top:0!important}',
     '.hdr-icons .avatar{display:none!important}',
 
     /* top bar */
