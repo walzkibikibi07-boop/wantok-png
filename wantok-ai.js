@@ -183,11 +183,27 @@
       else if (/\b(works|road|roads|highway|highways|transport|bridge|bridges)\b/.test(q)) requestedDepartment = "works";
       else if (/\b(land|lands|physical planning|land title|survey)\b/.test(q)) requestedDepartment = "lands";
       else if (/\b(community development|religion|youth|welfare|social services)\b/.test(q)) requestedDepartment = "community development";
-      locationHits.filter(function(hit){ return hit.location_type === "district" || hit.location_type === "province"; }).forEach(function(hit){
+      var contactLocations = [];
+      function addContactLocation(item) {
+        if (item && !contactLocations.some(function(existing){ return existing.id === item.id; })) contactLocations.push(item);
+      }
+      locationHits.forEach(function(hit){
+        if (hit.location_type === "province") addContactLocation(hit);
+        else if (hit.location_type === "district") {
+          addContactLocation(hit);
+          addContactLocation(liveData.locations.find(function(x){ return x.id === hit.parent_id && x.location_type === "province"; }));
+        } else if (hit.location_type === "llg") {
+          var district = liveData.locations.find(function(x){ return x.id === hit.parent_id && x.location_type === "district"; });
+          addContactLocation(district);
+          if (district) addContactLocation(liveData.locations.find(function(x){ return x.id === district.parent_id && x.location_type === "province"; }));
+        }
+      });
+      contactLocations.forEach(function(hit){
         liveData.districtContacts.filter(function(contact){
           return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment);
         }).forEach(function(contact){
-          var line = hit.name + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
+          var label = hit.name + (hit.location_type === "province" ? " (provincial contact)" : " (district contact)");
+          var line = label + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
           if (contact.contact_name) line += "; contact: " + contact.contact_name;
           if (contact.phone) line += "; phone: " + contact.phone;
           if (contact.email) line += "; email: " + contact.email;
