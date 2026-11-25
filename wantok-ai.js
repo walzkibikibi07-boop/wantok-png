@@ -174,17 +174,22 @@
         }
       });
       var contactLines = [];
-      locationHits.filter(function(hit){ return hit.location_type === "district"; }).forEach(function(hit){
-        liveData.districtContacts.filter(function(contact){ return contact.location_id === hit.id; }).forEach(function(contact){
+      var requestedDepartment = /\\b(health|hospital|clinic|medical|pha)\\b/.test(q) ? "health" : (/\\b(finance|treasury)\\b/.test(q) ? "finance" : "");
+      locationHits.filter(function(hit){ return hit.location_type === "district" || hit.location_type === "province"; }).forEach(function(hit){
+        liveData.districtContacts.filter(function(contact){
+          return contact.location_id === hit.id && (!requestedDepartment || (contact.department || "").toLowerCase() === requestedDepartment);
+        }).forEach(function(contact){
           var line = hit.name + " — " + (contact.department || "Government") + " " + (contact.office_name || "office");
           if (contact.contact_name) line += "; contact: " + contact.contact_name;
           if (contact.phone) line += "; phone: " + contact.phone;
           if (contact.email) line += "; email: " + contact.email;
+          if (contact.website_url) line += "; website: " + contact.website_url;
           if (contact.source_url) line += "; source: " + contact.source_url;
+          if (contact.notes) line += "; note: " + contact.notes;
           contactLines.push(line);
         });
       });
-      var contactText = contactLines.length ? "\\n\\nPublished district office contacts (verify current availability):\\n" + contactLines.join("\\n") : "";
+      var contactText = contactLines.length ? "\\n\\nPublished local department contacts (check verification status and confirm details before visiting):\\n" + contactLines.join("\\n") : "";
       var districtGuidance = requestedDistrict
         ? "\\n\\nDistrict service connections: the department links below are official national department portals available to people across PNG. They are not proof of a staffed office in this district. Use the provincial/district administration contact directory above to confirm the nearest local office, officer and current contact details."
         : "";
