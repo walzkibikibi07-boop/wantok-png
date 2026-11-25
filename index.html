@@ -1255,9 +1255,9 @@ function saveP() { try { localStorage.setItem(PK, JSON.stringify(P)); } catch (e
 function T(s) { return (P.lang === 'tp' && TP[s]) || s; }
 
 /* ---------- state ---------- */
-var S = { user: null, profile: null, posts: [], react: {}, ccount: {}, listings: [], saved: {}, jobs: [], applied: {}, stories: [], notices: [], services: [],
+var S = { user: null, profile: null, posts: [], react: {}, ccount: {}, listings: [], saved: {}, jobs: [], applied: {}, stories: [], notices: [], services: [], businesses: [], products: [],
   circles: [], ccounts: {}, mycircles: {}, talents: [], votes: {}, reports: [], msgs: [], cmsgs: {}, loaded: false };
-var ui = { mq: '', mcat: 'All', jq: '', jcat: 'All', jtab: 'find', feed: 'png', auth: { tab: 'phone', step: 'enter', phone: '', mode: 'in' } };
+var ui = { mq: '', mcat: 'All', jq: '', jcat: 'All', jtab: 'find', bq: '', feed: 'png', auth: { tab: 'phone', step: 'enter', phone: '', mode: 'in' } };
 var stack = [{ n: 'home', p: {} }];
 var tmpFile = null, histOK = false, afterClose = false, pollT = null, booted = false;
 
@@ -1297,6 +1297,12 @@ async function loadFeed() {
   (a.data || []).forEach(function (x) { var o = S.react[x.post_id] || (S.react[x.post_id] = { n: 0, mine: false }); o.n++; if (S.user && x.user_id === S.user.id) o.mine = true; });
   var c = await q(db.from('post_comments').select('post_id').in('post_id', ids));
   (c.data || []).forEach(function (x) { S.ccount[x.post_id] = (S.ccount[x.post_id] || 0) + 1; });
+}
+async function loadBusinesses() {
+  var r = await q(db.from('businesses').select('id,name,trading_name,category,province,district,llg,town,village,phone,whatsapp,website,description,products,services,delivery,status,is_verified,owner,created_at').order('created_at', { ascending: false }).limit(300));
+  if (r.data) S.businesses = r.data;
+  var p = await q(db.from('products').select('id,business_id,name,description,price_kina,unit,photo_url,in_stock,created_at').order('created_at', { ascending: false }).limit(500));
+  if (p.data) S.products = p.data;
 }
 async function loadListings() {
   var r = await q(db.from('listings').select('*').order('created_at', { ascending: false }).limit(150));
@@ -1895,6 +1901,7 @@ function go(n, p) { stack.push({ n: n, p: p || {} }); try { history.pushState({ 
 function tab(n) {
   stack = [{ n: n, p: {} }]; render();
   if (n === 'home') { loadFeed().then(function () { if (stack.length === 1 && stack[0].n === 'home') render(true); }); }
+  if (n === 'business') loadBusinesses().then(function () { if (stack[stack.length - 1].n === 'business') render(true); });
   if (n === 'market') loadListings().then(function () { if (stack[stack.length - 1].n === 'market') { var l = $('#mlist'); if (l) l.innerHTML = marketItems(); } });
   if (n === 'jobs') loadJobs().then(function () { if (stack[stack.length - 1].n === 'jobs') { var l = $('#jlist'); if (l) l.innerHTML = jobItems(); } });
   if (n === 'messages') loadMsgs().then(function () { if (stack[stack.length - 1].n === 'messages') render(true); });
@@ -1979,7 +1986,7 @@ SCREENS.home = function () {
   + S.stories.map(function (s) { return '<button class="story" data-a="storyView" data-id="' + s.id + '"><div class="ring' + (seen[s.id] ? ' seen' : '') + '"><span style="background:' + AVC[(s.color || 0) % AVC.length] + '">' + esc((s.author_name || '?').charAt(0).toUpperCase()) + '</span></div>' + esc((s.author_name || '').split(' ')[0]) + '</button>'; }).join('') + '</div>'
   + '<div class="tiles">'
   + '<button class="tile t-market" data-a="tab" data-v="market"><span class="ic">' + IC.cart + '</span><h3>MARKET</h3><p>' + T('Buy & Sell Locally') + '</p><span class="arrow">' + IC.arrow + '</span></button>'
-  + '<button class="tile t-business" data-a="regBiz"><span class="ic">🏪</span><h3>BUSINESS CONNECT</h3><p>Register • Discover • Grow</p><span class="arrow">' + IC.arrow + '</span></button>'
+  + '<button class="tile t-business" data-a="tab" data-v="business"><span class="ic">🏪</span><h3>BUSINESS CONNECT</h3><p>Register • Discover • Grow</p><span class="arrow">' + IC.arrow + '</span></button>'
   + '<button class="tile t-work" data-a="tab" data-v="jobs"><span class="ic">' + IC.job + '</span><h3>WORK</h3><p>' + T('Jobs, Gigs & Services') + '</p><span class="arrow">' + IC.arrow + '</span></button>'
   + '<button class="tile t-wantok" data-a="go" data-v="circles"><span class="ic">' + IC.people + '</span><h3>WANTOK</h3><p>' + T('Connect • Support • Build') + '</p><span class="arrow">' + IC.arrow + '</span></button>'
   + '<button class="tile t-talent" data-a="go" data-v="talent"><span class="ic">' + IC.star + '</span><h3>TALENT</h3><p>' + T('Show Your Skills') + '</p><span class="arrow">' + IC.arrow + '</span></button>'
@@ -2005,6 +2012,33 @@ function marketItems() {
 }
 SCREENS.market = function () {
   return '<div class="sh"><h2>' + T('Market') + '</h2><button class="btn sm" data-a="sell">+ ' + T('Sell') + '</button></div><div class="pad"><div class="sbox">' + IC.search + '<input data-live="market" placeholder="Search listings" value="' + esc(ui.mq) + '"></div></div><div class="chips" id="mcats">' + chipsHtml(['All'].concat(LCAT), ui.mcat, 'mCat') + '</div><div class="pad" id="mlist">' + marketItems() + '</div>';
+};
+function businessItems() {
+  var qtext = (ui.bq || '').toLowerCase();
+  var rows = S.businesses.filter(function (b) { return b.status === 'approved' || (S.user && b.owner === S.user.id); }).filter(function (b) {
+    return !qtext || [b.name,b.trading_name,b.category,b.province,b.district,b.llg,b.town,b.village,b.description].join(' ').toLowerCase().indexOf(qtext) >= 0;
+  });
+  if (!rows.length) return '<div class="empty">No businesses are listed yet. Be one of the first to register your PNG business.</div>';
+  return rows.map(function (b) {
+    var where = [b.town,b.district,b.province].filter(Boolean).join(' • ') || 'Papua New Guinea';
+    var own = S.user && b.owner === S.user.id;
+    var badge = b.status === 'approved' ? (b.is_verified ? 'Verified business' : 'Approved listing') : 'Pending review — only you can see this';
+    return '<article class="card" style="padding:14px;margin:10px 12px"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-size:28px">🏪</div><div style="flex:1;min-width:0"><b>'+esc(b.trading_name || b.name)+'</b><div class="meta">'+esc(b.category || 'Business')+' • '+esc(where)+'</div><span class="pill">'+esc(badge)+'</span></div></div><p class="desc">'+esc(b.description || b.services || 'Local business on WANTOK PNG.')+'</p><div class="row2">'+(b.phone ? '<a class="btn" href="tel:'+esc(b.phone)+'">Call business</a>' : '')+(b.whatsapp ? '<a class="btn alt" target="_blank" rel="noopener" href="https://wa.me/'+esc(b.whatsapp.replace(/[^0-9]/g,''))+'">WhatsApp</a>' : '')+(own ? '<button class="btn alt" data-a="addProduct" data-id="'+b.id+'">Add product</button>' : '')+'</div></article>';
+  }).join('');
+}
+function productItems() {
+  var allowed = S.businesses.filter(function (b) { return b.status === 'approved' || (S.user && b.owner === S.user.id); });
+  var ids = allowed.map(function (b) { return b.id; });
+  var rows = S.products.filter(function (p) { return ids.indexOf(p.business_id) >= 0 && p.in_stock !== false; });
+  if (!rows.length) return '<div class="empty">No products have been added yet. Registered businesses can add products with prices in Kina.</div>';
+  return rows.map(function (p) { var b = allowed.filter(function (x) { return x.id === p.business_id; })[0]; return '<div class="item"><div class="pic">'+(p.photo_url ? '<img src="'+esc(p.photo_url)+'" alt="" loading="lazy">' : '🛍️')+'</div><div class="info"><b>'+esc(p.name)+'</b><em>'+(p.price_kina !== null && p.price_kina !== undefined ? 'K'+Number(p.price_kina).toFixed(2)+(p.unit ? ' / '+esc(p.unit) : '') : 'Ask for price')+'</em><small>'+esc(b ? (b.trading_name || b.name) : 'PNG business')+' • '+esc(b ? [b.town,b.province].filter(Boolean).join(', ') : '')+'</small><span class="meta">'+esc(p.description || '')+'</span></div></div>'; }).join('');
+}
+SCREENS.business = function () {
+  return sub('Business Connect', '<button class="btn sm" data-a="regBiz">+ Register</button>')
+    + '<div class="pad"><div class="gnote">Connect with local businesses, discover PNG products and grow your customer network. Business listings are reviewed before public display.</div><div class="sbox">'+IC.search+'<input data-live="business" placeholder="Search business, product, town or province" value="'+esc(ui.bq)+'"></div><div class="row2"><button class="btn" data-a="regBiz">Register a Business</button><button class="btn alt" data-a="addProduct">Add a Product</button></div></div>'
+    + '<div class="sec"><h2>🏪 PNG Business Directory</h2></div><div id="business-list">'+businessItems()+'</div>'
+    + '<div class="sec"><h2>🛍️ Products & Prices in Kina</h2></div><div class="pad" id="product-list">'+productItems()+'</div>'
+    + '<div class="pad"><p class="note">WANTOK PNG does not issue IPA certificates. Businesses can check or complete official registration through the <a href="https://www.ipa.gov.pg/Pages/corp/PG_index.aspx" target="_blank" rel="noopener">PNG Investment Promotion Authority</a>. Online payments are not active yet.</p></div>';
 };
 SCREENS.listing = function (p) {
   var l = by(S.listings, p.id); if (!l) return notFound();
@@ -2371,6 +2405,12 @@ function feedbackModal(topic) {
 function talentModal() {
   if (needLogin('Sign in to enter')) return;
   sheet('Enter the Talent Showcase', '<form data-form="talent"><div class="field"><label class="l">Title</label><input name="title" required maxlength="100"></div><div class="field"><label class="l">Category</label><select name="cat">' + opts(TCAT) + '</select></div><div class="field"><label class="l">About your talent</label><textarea name="desc" rows="3" maxlength="300"></textarea></div><button class="btn">Enter</button></form>');
+}
+function productModal(preselect) {
+  if (needLogin('Sign in to add products')) return;
+  var mine = S.businesses.filter(function (b) { return S.user && b.owner === S.user.id; });
+  if (!mine.length) { toast('Register your business first. You can add products after submitting the business registration.'); bizModal(); return; }
+  sheet('Add a product to your business', '<form data-form="product"><div class="field"><label class="l">Your business *</label><select name="business_id" required>'+mine.map(function (b) { return '<option value="'+b.id+'"'+(String(preselect)===String(b.id)?' selected':'')+'>'+esc(b.trading_name || b.name)+' ('+esc(b.status)+')</option>'; }).join('')+'</select></div><div class="field"><label class="l">Product name *</label><input name="name" required maxlength="150"></div><div class="field"><label class="l">Description</label><textarea name="description" rows="3" maxlength="1000"></textarea></div><div class="field"><label class="l">Price (PNG Kina)</label><input name="price_kina" type="number" min="0" step="0.01"></div><div class="field"><label class="l">Unit</label><input name="unit" placeholder="each, kg, bag, carton"></div><div class="field"><label class="l">Product photo URL (optional)</label><input name="photo_url" type="url"></div><div class="field"><label><input type="checkbox" name="in_stock" checked style="width:auto;margin-right:8px">Available in stock</label></div><button class="btn" type="submit">SAVE PRODUCT</button></form>');
 }
 function bizModal() {
   if (needLogin('Sign in to register a business')) return;
@@ -2762,6 +2802,7 @@ joinCircle: async function (el) {
 circleChat: function (el) { go('cchat', { id: el.dataset.id }); },
 editProfile: function () { profileModal(false); },
 regBiz: function () { bizModal(); },
+  addProduct: function (el) { productModal(el && el.dataset ? el.dataset.id : null); },
   intelGetLocation: function () {
     if (!navigator.geolocation) { toast('GPS location is not supported by this browser'); return; }
     toast('Requesting location permission…');
@@ -2948,6 +2989,15 @@ talent: async function (f) {
   if (r.error) { toast('Could not enter: ' + r.error.message); return; }
   S.talents.unshift(r.data); closeModal(); render(true); toast('You are in the showcase!');
 },
+product: async function (f) {
+  if (!S.user) { toast('Sign in first.'); return; }
+  var price = val(f, 'price_kina');
+  var row = { business_id: Number(val(f, 'business_id')), name: val(f, 'name'), description: val(f, 'description') || null, price_kina: price === '' ? null : Number(price), unit: val(f, 'unit') || null, photo_url: val(f, 'photo_url') || null, in_stock: !!(f.elements.in_stock && f.elements.in_stock.checked) };
+  if (!row.business_id || !row.name || (row.price_kina !== null && (!Number.isFinite(row.price_kina) || row.price_kina < 0))) { toast('Check the product details and price.'); return; }
+  var r = await q(db.from('products').insert(row).select().single());
+  if (r.error) { toast('Could not save product: ' + r.error.message); return; }
+  S.products.unshift(r.data); closeModal(); render(true); toast('Product added to your business catalogue.');
+},
 business: async function (f) {
   var g = function (n) { return val(f, n) || null; };
   var yr = parseInt(val(f, 'year_established'), 10);
@@ -2962,7 +3012,7 @@ business: async function (f) {
     email: (S.user && S.user.email) || null
   }));
   if (r.error) { toast('Could not submit: ' + r.error.message); return; }
-  closeModal(); toast('Submitted. We will review it soon.');
+  closeModal(); await loadBusinesses(); toast('Business registration submitted. It will appear publicly after review.'); if (stack[stack.length - 1].n === 'business') render(true);
 },
 chat: async function (f) {
   var cur = stack[stack.length - 1], t = val(f, 'text'); if (!t || !S.user) return;
@@ -2986,7 +3036,8 @@ document.addEventListener('submit', function (e) {
 });
 document.addEventListener('input', function (e) {
   var t = e.target, l = t.dataset && t.dataset.live;
-  if (l === 'market') { ui.mq = t.value; $('#mlist').innerHTML = marketItems(); } else if (l === 'jobs') { ui.jq = t.value; $('#jlist').innerHTML = jobItems(); }
+  if (l === 'business') { ui.bq = t.value; var bl = $('#business-list'); if (bl) bl.innerHTML = businessItems(); var pl = $('#product-list'); if (pl) pl.innerHTML = productItems(); }
+  else if (l === 'market') { ui.mq = t.value; $('#mlist').innerHTML = marketItems(); } else if (l === 'jobs') { ui.jq = t.value; $('#jlist').innerHTML = jobItems(); }
 });
 
 /* ---------- start ---------- */
