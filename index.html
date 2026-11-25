@@ -2997,13 +2997,32 @@ golive: async function (f) {
 },
 post: async function (f) {
   var text = val(f, 'text'); if (!text && !tmpFile) { toast('Write something or add a photo or video'); return; }
-  var row = { title: (text || (isVideoFile(tmpFile) ? 'Video' : 'Photo')).split('\n')[0].slice(0, 100), body: text || null, kind: 'community', author_name: myName(), scope: val(f, 'scope') || 'png', province: loc().province, district: loc().district };
+  toast('Checking your secure publishing session...');
+  var auth = await q(db.auth.getSession());
+  var session = auth.data && auth.data.session;
+  if (!session || !session.user || !session.access_token) {
+    S.user = null;
+    authModal('Please sign in again before publishing');
+    toast('Your sign-in session has expired. Please sign in again.');
+    return;
+  }
+  if (session.expires_at && session.expires_at * 1000 < Date.now() + 60000) {
+    var refreshed = await q(db.auth.refreshSession());
+    if (refreshed.error || !refreshed.data || !refreshed.data.session) {
+      authModal('Please sign in again before publishing');
+      toast('Could not refresh your sign-in. Please sign in again.');
+      return;
+    }
+    session = refreshed.data.session;
+  }
+  S.user = session.user;
+  var row = { author: session.user.id, title: (text || (isVideoFile(tmpFile) ? 'Video' : 'Photo')).split('\n')[0].slice(0, 100), body: text || null, kind: 'community', author_name: myName(), scope: val(f, 'scope') || 'png', province: loc().province, district: loc().district };
   if (tmpFile) {
     if (isVideoFile(tmpFile)) { toast('Uploading video, please wait...'); row.media_url = await uploadVideo(tmpFile); row.media_type = 'video'; }
     else { toast('Uploading photo, please wait...'); row.media_url = await uploadPhoto(tmpFile, { allowOriginalOnDecodeError: true }); row.media_type = 'image'; }
   }
   var r = await q(db.from('posts').insert(row).select().single());
-  if (r.error) { toast('Could not post: ' + r.error.message); return; }
+  if (r.error) { toast('Post not published: ' + r.error.message); console.error('WANTOK PNG post insert failed', r.error); return; }
   S.posts.unshift(r.data); ui.feed = 'png'; closeModal(); tab('home'); toast('Posted!');
 },
 listing: async function (f) {
