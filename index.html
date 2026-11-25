@@ -1509,32 +1509,23 @@ async function uploadPhoto(file, options) {
   var session = sessionResult.data && sessionResult.data.session;
   if (!session || !session.access_token) throw new Error('Your sign-in has expired. Please sign in again.');
 
-  var encodedPath = path.split('/').map(function (part) { return encodeURIComponent(part); }).join('/');
-  var endpoint = SB_URL.replace(/\/$/, '') + '/storage/v1/object/' +
-    encodeURIComponent(BUCKET) + '/' + encodedPath;
-
-  await new Promise(function (resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', endpoint, true);
-    xhr.setRequestHeader('apikey', SB_KEY);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + session.access_token);
-    xhr.setRequestHeader('Content-Type', contentType);
-    xhr.setRequestHeader('x-upsert', 'false');
-    xhr.onload = function () {
-      var payload = null;
-      try { payload = JSON.parse(xhr.responseText || '{}'); } catch (e) {}
-      if (xhr.status >= 200 && xhr.status < 300) resolve(payload || {});
-      else reject(new Error('Storage rejected the photo (HTTP ' + xhr.status + '): ' +
-        ((payload && (payload.message || payload.error || payload.error_description)) || xhr.responseText || 'Unknown Storage error').toString().slice(0, 240)));
-    };
-    xhr.onerror = function () {
-      reject(new Error('The browser could not reach Supabase Storage. Check your connection, then retry. If this continues, the browser or network may be blocking the upload request.'));
-    };
-    xhr.ontimeout = function () { reject(new Error('The photo upload timed out. Try a smaller photo or a more stable connection.')); };
-    xhr.onabort = function () { reject(new Error('The photo upload was cancelled.')); };
-    xhr.timeout = 120000;
-    xhr.send(prepared);
+  // Use the official Supabase Storage SDK rather than a hand-built XHR request.
+  // The SDK manages the authenticated request and surfaces Storage/CORS errors.
+  var uploadResult = await db.storage.from(BUCKET).upload(path, prepared, {
+    contentType: contentType,
+    cacheControl: '3600',
+    upsert: false
   });
+  if (uploadResult.error) {
+    console.error('WANTOK PNG photo upload failed', {
+      message: uploadResult.error.message,
+      statusCode: uploadResult.error.statusCode,
+      error: uploadResult.error.error
+    });
+    throw new Error('Supabase photo upload failed' +
+      (uploadResult.error.statusCode ? ' (HTTP ' + uploadResult.error.statusCode + ')' : '') +
+      ': ' + (uploadResult.error.message || 'Unknown Storage error'));
+  }
 
   var publicUrl = db.storage.from(BUCKET).getPublicUrl(path);
   if (!publicUrl || !publicUrl.data || !publicUrl.data.publicUrl) {
