@@ -2029,7 +2029,7 @@ function businessItems() {
 function productItems() {
   var allowed = S.businesses.filter(function (b) { return b.status === 'approved' || (S.user && b.owner === S.user.id); });
   var ids = allowed.map(function (b) { return b.id; });
-  var rows = S.products.filter(function (p) { return ids.indexOf(p.business_id) >= 0 && p.in_stock !== false; });
+  var rows = S.products.filter(function (p) { var b = allowed.filter(function (x) { return x.id === p.business_id; })[0]; var hay = [p.name,p.description,p.unit,b && b.name,b && b.trading_name,b && b.province,b && b.town].join(' ').toLowerCase(); return ids.indexOf(p.business_id) >= 0 && p.in_stock !== false && (!ui.bq || hay.indexOf(ui.bq.toLowerCase()) >= 0); });
   if (!rows.length) return '<div class="empty">No products have been added yet. Registered businesses can add products with prices in Kina.</div>';
   return rows.map(function (p) { var b = allowed.filter(function (x) { return x.id === p.business_id; })[0]; return '<div class="item"><div class="pic">'+(p.photo_url ? '<img src="'+esc(p.photo_url)+'" alt="" loading="lazy">' : '🛍️')+'</div><div class="info"><b>'+esc(p.name)+'</b><em>'+(p.price_kina !== null && p.price_kina !== undefined ? 'K'+Number(p.price_kina).toFixed(2)+(p.unit ? ' / '+esc(p.unit) : '') : 'Ask for price')+'</em><small>'+esc(b ? (b.trading_name || b.name) : 'PNG business')+' • '+esc(b ? [b.town,b.province].filter(Boolean).join(', ') : '')+'</small><span class="meta">'+esc(p.description || '')+'</span></div></div>'; }).join('');
 }
