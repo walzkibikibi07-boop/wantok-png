@@ -143,20 +143,28 @@
       });
       var selected = matches.length ? matches : liveData.services;
       var gs=publicList(selected,function(x){return x.name+(x.category?" — "+x.category:"")+(x.url?" — "+x.url:"")+(x.description?" — "+x.description:"");},"No government-service links are currently stored in the public directory.");
-      var locationHits = liveData.locations.filter(function(x){ return q.indexOf(x.name.toLowerCase()) >= 0 || (x.name.toLowerCase().indexOf("northern (oro)") >= 0 && /\\boro\\b/.test(q)); });
+      function locationNameMatch(item) {
+        var name = item.name.toLowerCase().replace(/\\s+(province|district|llg)$/,"").trim();
+        if (name.length < 3) return false;
+        return q.indexOf(name) >= 0 || (name.indexOf("northern (oro)") >= 0 && /\\boro\\b/.test(q));
+      }
+      var locationHits = liveData.locations.filter(locationNameMatch);
       var locationLines = [];
-      locationHits.slice(0,8).forEach(function(hit){
+      locationHits.slice(0,12).forEach(function(hit){
         var parent = liveData.locations.find(function(x){ return x.id === hit.parent_id; });
         var grand = parent ? liveData.locations.find(function(x){ return x.id === parent.parent_id; }) : null;
         var path = [grand && grand.name, parent && parent.name, hit.name].filter(Boolean).join(" > ");
-        locationLines.push(path + (hit.region ? " ("+hit.region+" Region)" : ""));
+        locationLines.push(path);
         if (hit.location_type === "province") {
-          liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "district"; }).forEach(function(d){ locationLines.push("  District: "+d.name); });
+          liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "district"; }).forEach(function(d){
+            locationLines.push("  District: "+d.name);
+            liveData.locations.filter(function(x){ return x.parent_id === d.id && x.location_type === "llg"; }).forEach(function(l){ locationLines.push("    LLG: "+l.name); });
+          });
         } else if (hit.location_type === "district") {
           liveData.locations.filter(function(x){ return x.parent_id === hit.id && x.location_type === "llg"; }).forEach(function(l){ locationLines.push("  LLG: "+l.name); });
         }
       });
-      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nSource: PNG Department of Finance directory. Check with the relevant administration for current office contacts." : "";
+      var locationText = locationLines.length ? "\\n\\nProvincial / district / LLG directory:\\n"+locationLines.join("\\n")+"\\nDirectory source: Open Admin Data (CC BY 4.0), cross-check with the relevant Provincial or District Administration. Contact details are not included unless separately verified." : "";
       var guidance = matches.length ? "I matched the closest department/service to your question." : "Here are the main official links currently in the directory. Tell me the department or service name to narrow the list.";
       return tpi ? prefix+"Mi painim ol official gavman link long WANTOK PNG. Openim link bilong stretpela opis, lukim Services, Forms o Contact, na bihainim ol step bilong ol. Kisim ol pepa ol i askim long en na sekim fee na deadline stret long opis. WANTOK PNG i no save approve aplikesen.\\n"+gs+locationText : prefix+guidance+" Open the official link, look for Services, Forms or Contact, follow the department's instructions, prepare the documents it requests, and confirm current fees and deadlines directly with that office. WANTOK PNG cannot approve government applications.\\n"+gs+locationText;
     }
