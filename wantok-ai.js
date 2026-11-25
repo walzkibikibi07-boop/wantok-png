@@ -50,7 +50,7 @@
     var bubble = el("div", { className: "wantok-ai-msg " + role });
     var value = String(text || "");
     if (role === "assistant") {
-      var urlPattern = /https?:\\/\\/[^\\s)]+/g;
+      var urlPattern = /https?:\/\/[^\s)]+/g;
       var last = 0, match;
       while ((match = urlPattern.exec(value)) !== null) {
         if (match.index > last) bubble.appendChild(document.createTextNode(value.slice(last, match.index)));
