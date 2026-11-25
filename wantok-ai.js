@@ -219,7 +219,7 @@
           return liveData.districtContacts.some(function(contact){
             return contact.location_id === location.id &&
               (contact.department || "").toLowerCase() === "district administration referral" &&
-              (contact.phone || contact.email);
+              (contact.phone || contact.email || contact.website_url);
           });
         });
         if (!hasLocalPhoneOrEmail && !hasDistrictReferral) {
