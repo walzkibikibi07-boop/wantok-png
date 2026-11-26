@@ -256,6 +256,7 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .post-acts{display:flex;justify-content:space-around;padding:4px 6px 8px;border-top:1px solid #edf0f4;margin:6px 8px 0}
 .post-acts button{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;padding:8px 8px;border-radius:10px;color:#444}
 .post-acts button.liked{color:var(--red)}.post-acts button.liked svg{fill:var(--red)}
+.post-acts{position:relative}.reaction-picker{position:absolute;left:8px;bottom:48px;z-index:20;display:flex;gap:5px;padding:9px 10px;background:#fff;border:1px solid #e5eaf0;border-radius:30px;box-shadow:0 8px 28px rgba(10,25,45,.2);animation:reactPop .16s ease-out}.reaction-picker button{font-size:25px;padding:4px 5px;min-width:36px;justify-content:center;border-radius:50%;transition:transform .12s}.reaction-picker button:active{transform:scale(1.3)}@keyframes reactPop{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 /* sub screens */
 .sh{position:relative;top:auto;z-index:1;background:var(--bg);display:flex;align-items:center;gap:10px;padding:14px 12px 10px}
 /* More screen: prevent the stray decorative/sticky divider above its heading. */
@@ -1295,8 +1296,8 @@ async function loadFeed() {
   S.posts = r.data; S.react = {}; S.ccount = {};
   var ids = r.data.map(function (p) { return p.id; });
   if (!ids.length) return;
-  var a = await q(db.from('post_reactions').select('post_id,user_id').in('post_id', ids));
-  (a.data || []).forEach(function (x) { var o = S.react[x.post_id] || (S.react[x.post_id] = { n: 0, mine: false }); o.n++; if (S.user && x.user_id === S.user.id) o.mine = true; });
+  var a = await q(db.from('post_reactions').select('post_id,user_id,reaction').in('post_id', ids));
+  (a.data || []).forEach(function (x) { var o = S.react[x.post_id] || (S.react[x.post_id] = { n: 0, mine: false, reaction: null, counts: {} }); o.n++; var k=x.reaction || 'like'; o.counts[k]=(o.counts[k]||0)+1; if (S.user && x.user_id === S.user.id) { o.mine=true; o.reaction=k; } });
   var c = await q(db.from('post_comments').select('post_id').in('post_id', ids));
   (c.data || []).forEach(function (x) { S.ccount[x.post_id] = (S.ccount[x.post_id] || 0) + 1; });
 }
@@ -1941,13 +1942,15 @@ function jcard(j) {
   return '<div class="item" data-a="openJob" data-id="' + j.id + '"><div class="pic" style="background:linear-gradient(135deg,#f5b800,#a4701a)"><span class="jic">' + IC.job + '</span></div><div class="info"><b>' + esc(j.title) + '</b><em>' + esc(j.pay || '') + '</em><small>' + esc(j.employer || '') + ' • ' + esc(j.location || j.town || j.province || '') + '</small><span class="pill">' + esc(j.job_type || 'Job') + '</span>' + (j.status === 'pending' ? ' <span class="pill" style="background:#fff0c2;color:#8a6200">Waiting for approval</span>' : '') + '</div><div class="side">' + (S.applied[j.id] ? '<span class="done">✓</span>' : '') + '</div></div>';
 }
 function postHtml(p) {
-  var r = S.react[p.id] || { n: 0, mine: false }, cc = S.ccount[p.id] || 0, own = S.user && p.author === S.user.id;
+  var r = S.react[p.id] || { n: 0, mine: false, reaction: null, counts: {} }, cc = S.ccount[p.id] || 0, own = S.user && p.author === S.user.id;
+  var reactionEmoji = {like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏'};
+  var myEmoji = r.reaction ? reactionEmoji[r.reaction] : '🗳️';
   var media = p.media_url && !P.saver ? (p.media_type === 'video' ? '<video class="media" src="' + esc(p.media_url) + '" controls playsinline preload="metadata"></video>' : '<img class="media" src="' + esc(p.media_url) + '" alt="" loading="lazy">') : '';
   var official = /^gov connect/i.test(p.author_name || '');
   return '<div class="post' + (official ? ' official' : '') + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div><button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
     + (p.body || p.title ? '<p>' + esc(p.body || p.title) + '</p>' : '') + media
     + '<div class="post-stats"><span>🗳️ ' + r.n + ' votes</span><span>' + cc + ' comments</span></div>'
-    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '">🗳️ ' + T('Vote') + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
+    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" aria-label="Vote; press and hold for reactions">' + myEmoji + ' ' + (r.mine ? 'Reacted' : T('Vote')) + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
 }
 function feedPosts() {
   var pr = S.profile || {}, t = ui.feed;
@@ -2786,14 +2789,8 @@ refresh: async function () { toast('Refreshing...'); await loadAll(); render(tru
 toggleLang: function () { P.lang = P.lang === 'tp' ? 'en' : 'tp'; saveP(); render(true); toast(P.lang === 'tp' ? 'Tok Pisin' : 'English'); },
 toggleSaver: function () { P.saver = !P.saver; saveP(); render(true); toast(P.saver ? 'Data Saver on: photos hidden' : 'Data Saver off'); },
 newPost: function () { closeModal(); newPostModal(); },
-like: async function (el) {
-  if (needLogin('Sign in to vote on posts')) return;
-  var p = by(S.posts, el.dataset.id); if (!p) return;
-  var r = S.react[p.id] || (S.react[p.id] = { n: 0, mine: false }), was = r.mine;
-  r.mine = !was; r.n += was ? -1 : 1; refreshPost(p.id);
-  var res = was ? await q(db.from('post_reactions').delete().eq('post_id', p.id).eq('user_id', S.user.id)) : await q(db.from('post_reactions').upsert({ post_id: p.id, user_id: S.user.id, reaction: 'like' }));
-  if (res.error) { r.mine = was; r.n += was ? 1 : -1; refreshPost(p.id); toast('Could not save your vote'); }
-},
+like: async function (el) { await savePostReaction(el.dataset.id, 'like'); },
+ reactChoice: async function (el) { var post=el.closest('[data-post]'); var picker=el.closest('.reaction-picker'); if(picker) picker.remove(); if(post) await savePostReaction(post.dataset.post, el.dataset.reaction); },
 comment: function (el) { commentsModal(el.dataset.id); },
 sharePost: function (el) { var p = by(S.posts, el.dataset.id); if (p) share('WANTOK PNG', (p.author_name || '') + ': ' + (p.body || p.title || '')); },
 
@@ -2906,7 +2903,37 @@ regBiz: function () { bizModal(); },
 },
 about: function (){ sheet('About WANTOK PNG', '<img src="' + LOGO_SRC + '" alt="WANTOK PNG" style="display:block;width:170px;height:170px;border-radius:50%;margin:0 auto 14px;box-shadow:0 4px 14px rgba(0,0,0,.25)"><p class="desc">WANTOK PNG: Our People • Our Culture • Our Future.<br><br>Connect, share, support and grow. Your posts, listings, jobs and reports are saved online so your wantoks across PNG can see them.</p><button class="btn alt" data-a="close">Close</button>'); }
 };
+async function savePostReaction(postId, reaction) {
+  if (needLogin('Sign in to react to posts')) return;
+  var p=by(S.posts,postId); if(!p) return;
+  var old=S.react[p.id] || {n:0,mine:false,reaction:null,counts:{}};
+  var previous={n:old.n,mine:old.mine,reaction:old.reaction,counts:Object.assign({},old.counts||{})};
+  var same=old.mine && old.reaction===reaction;
+  if(old.mine && old.reaction) old.counts[old.reaction]=Math.max(0,(old.counts[old.reaction]||1)-1);
+  old.mine=!same; old.reaction=same?null:reaction;
+  if(!same) old.counts[reaction]=(old.counts[reaction]||0)+1;
+  old.n=Math.max(0,old.n+(same?-1:(previous.mine?0:1)));
+  S.react[p.id]=old; refreshPost(p.id);
+  var res=same ? await q(db.from('post_reactions').delete().eq('post_id',p.id).eq('user_id',S.user.id)) : await q(db.from('post_reactions').upsert({post_id:p.id,user_id:S.user.id,reaction:reaction}));
+  if(res.error){S.react[p.id]=previous;refreshPost(p.id);toast('Could not save reaction. Please try again.');}
+}
+var reactionHoldTimer=null,reactionHoldButton=null,reactionHoldOpened=false;
+document.addEventListener('pointerdown',function(e){
+ var b=e.target.closest && e.target.closest('[data-a="like"]'); if(!b)return;
+ reactionHoldButton=b;reactionHoldOpened=false;clearTimeout(reactionHoldTimer);
+ reactionHoldTimer=setTimeout(function(){
+  if(!reactionHoldButton||!reactionHoldButton.isConnected)return;
+  reactionHoldOpened=true;var acts=reactionHoldButton.closest('.post-acts');if(!acts)return;
+  var old=acts.querySelector('.reaction-picker');if(old)old.remove();
+  var p=document.createElement('div');p.className='reaction-picker';
+  p.innerHTML=['like','love','haha','wow','sad','support'].map(function(k){var e={like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏'}[k];return '<button type="button" data-a="reactChoice" data-reaction="'+k+'" aria-label="'+k+'">'+e+'</button>';}).join('');
+  acts.appendChild(p);if(navigator.vibrate)navigator.vibrate(25);
+ },480);
+},{passive:true});
+document.addEventListener('pointerup',function(){clearTimeout(reactionHoldTimer);});
+document.addEventListener('pointercancel',function(){clearTimeout(reactionHoldTimer);});
 document.addEventListener('click', function (e) {
+ if(reactionHoldOpened&&e.target.closest&&e.target.closest('[data-a="like"]')){e.preventDefault();reactionHoldOpened=false;reactionHoldButton=null;return;}
   var el = e.target.closest && e.target.closest('[data-a]'); if (!el) return;
   var f = A[el.dataset.a]; if (f) { e.preventDefault(); Promise.resolve(f(el, e)).catch(function (err) { toast((err && err.message) || 'Something went wrong'); }); }
 });
