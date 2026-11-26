@@ -440,6 +440,9 @@ input,select,textarea{font-size:16px}
   .brand h1{font-size:24px}
   .tile h3{font-size:18px}
 }
+/* Final override: reaction is a bare emoji, never a coloured button. */
+.post .post-acts>button[data-a="like"],.post .post-acts>button[data-a="like"]:focus,.post .post-acts>button[data-a="like"]:active{background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;outline:0!important;min-width:0!important;width:auto!important;height:auto!important;padding:7px 12px!important;color:inherit!important;filter:none!important}
+.post .post-acts>button[data-a="like"]::before,.post .post-acts>button[data-a="like"]::after{display:none!important;content:none!important}
 </style>
 <style id="gov-connect-css">
 #government-connect {
@@ -1954,7 +1957,7 @@ function postHtml(p) {
   return '<div class="post' + (official ? ' official' : '') + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div><button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
     + (p.body || p.title ? '<p>' + esc(p.body || p.title) + '</p>' : '') + media
     + '<div class="post-stats"><span>🗳️ ' + r.n + ' votes</span><span>' + cc + ' comments</span></div>'
-    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" aria-label="Vote; press and hold for reactions">' + '<span class="post-reaction-emoji" aria-hidden="true">' + myEmoji + '</span>' + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
+    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" style="background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;outline:0!important;min-width:0!important;width:auto!important;height:auto!important;padding:7px 12px!important;color:inherit!important;appearance:none;-webkit-appearance:none" aria-label="Press and hold for reactions">' + '<span class="post-reaction-emoji" aria-hidden="true">' + myEmoji + '</span>' + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
 }
 function feedPosts() {
   var pr = S.profile || {}, t = ui.feed;
