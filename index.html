@@ -258,7 +258,7 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .post-acts button.liked{color:var(--red)}.post-acts button.liked svg{fill:var(--red)}
 .post-acts{position:relative}.reaction-picker{position:absolute;left:8px;bottom:48px;z-index:20;display:flex;gap:5px;padding:9px 10px;background:#fff;border:1px solid #e5eaf0;border-radius:30px;box-shadow:0 8px 28px rgba(10,25,45,.2);animation:reactPop .16s ease-out}.reaction-picker button{font-size:25px;padding:4px 5px;min-width:36px;justify-content:center;border-radius:50%;transition:transform .12s}.reaction-picker button:active{transform:scale(1.3)}
 /* Mobile long-press reactions: prevent Android text-selection Copy toolbar on Vote. */
-.post-acts button[data-a="like"]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}
+.post-acts button[data-a="like"]{background:transparent!important;box-shadow:none!important;border:0!important;color:inherit;padding:7px 12px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}.post-acts button[data-a="like"].liked{color:inherit}.post-reaction-emoji{font-size:23px;line-height:1;display:inline-block;transition:transform .15s}.post-acts button[data-a="like"].liked .post-reaction-emoji{transform:scale(1.08)}
 .reaction-picker,.reaction-picker *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 @keyframes reactPop{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 /* sub screens */
@@ -1947,14 +1947,14 @@ function jcard(j) {
 }
 function postHtml(p) {
   var r = S.react[p.id] || { n: 0, mine: false, reaction: null, counts: {} }, cc = S.ccount[p.id] || 0, own = S.user && p.author === S.user.id;
-  var reactionEmoji = {like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏'};
-  var myEmoji = r.reaction ? reactionEmoji[r.reaction] : '🗳️';
+  var reactionEmoji = {like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏',frustrated:'😤',angry:'😡'};
+  var myEmoji = r.reaction ? (reactionEmoji[r.reaction] || '😊') : '😊';
   var media = p.media_url && !P.saver ? (p.media_type === 'video' ? '<video class="media" src="' + esc(p.media_url) + '" controls playsinline preload="metadata"></video>' : '<img class="media" src="' + esc(p.media_url) + '" alt="" loading="lazy">') : '';
   var official = /^gov connect/i.test(p.author_name || '');
   return '<div class="post' + (official ? ' official' : '') + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div><button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
     + (p.body || p.title ? '<p>' + esc(p.body || p.title) + '</p>' : '') + media
     + '<div class="post-stats"><span>🗳️ ' + r.n + ' votes</span><span>' + cc + ' comments</span></div>'
-    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" aria-label="Vote; press and hold for reactions">' + myEmoji + ' ' + (r.mine ? 'Reacted' : T('Vote')) + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
+    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" aria-label="Vote; press and hold for reactions">' + '<span class="post-reaction-emoji" aria-hidden="true">' + myEmoji + '</span>' + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
 }
 function feedPosts() {
   var pr = S.profile || {}, t = ui.feed;
