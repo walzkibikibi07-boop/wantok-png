@@ -2933,7 +2933,7 @@ document.addEventListener('pointerdown',function(e){
   reactionHoldOpened=true;var acts=reactionHoldButton.closest('.post-acts');if(!acts)return;
   var old=acts.querySelector('.reaction-picker');if(old)old.remove();
   var p=document.createElement('div');p.className='reaction-picker';
-  p.innerHTML=['like','love','haha','wow','sad','support','frustrated'].map(function(k){var e={like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏',frustrated:'😤'}[k];var label={like:'Like',love:'Love',haha:'Haha',wow:'Wow',sad:'Sad',support:'Support',frustrated:'Frustrated'}[k];return '<button type="button" data-a="reactChoice" data-reaction="'+k+'" aria-label="'+label+'" title="'+label+'">'+e+'</button>';}).join('');
+  p.innerHTML=['like','love','haha','wow','sad','support','frustrated','angry'].map(function(k){var e={like:'👍',love:'❤️',haha:'😂',wow:'😮',sad:'😢',support:'🙏',frustrated:'😤',angry:'😡'}[k];var label={like:'Like',love:'Love',haha:'Haha',wow:'Wow',sad:'Sad',support:'Support',frustrated:'Frustrated',angry:'Angry'}[k];return '<button type="button" data-a="reactChoice" data-reaction="'+k+'" aria-label="'+label+'" title="'+label+'">'+e+'</button>';}).join('');
   acts.appendChild(p);if(navigator.vibrate)navigator.vibrate(25);
  },480);
 },{passive:true});
