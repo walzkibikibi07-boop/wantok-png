@@ -1978,7 +1978,7 @@ function feedHtml() {
 }
 var FEED_TABS = [['district', 'My District'], ['province', 'My Province'], ['png', 'All PNG']];
 function scopeChips() { return FEED_TABS.map(function (s) { return '<button class="chip' + (ui.feed === s[0] ? ' on' : '') + '" data-a="feedScope" data-v="' + s[0] + '">' + T(s[1]) + '</button>'; }).join(''); }
-function repaintFeed() { var f = $('#feed'); if (f) f.innerHTML = feedHtml(); var s = $('#scopes'); if (s) s.innerHTML = scopeChips(); }
+function repaintFeed() { var f = $('#feed'); if (f) f.innerHTML = feedHtml(); var s = $('#scopes'); if (s) s.innerHTML = scopeChips(); if (location.hash && location.hash.indexOf('#post-') === 0) { var targetId = decodeURIComponent(location.hash.slice(1)); setTimeout(function () { var target = document.getElementById(targetId); if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 120); } }
 
 /* ---------- screens ---------- */
 var SCREENS = {};
