@@ -259,7 +259,8 @@ input,select,textarea{font-family:inherit;font-size:16px}
 .post-acts{position:relative}.reaction-picker{position:absolute;left:8px;bottom:48px;z-index:20;display:flex;gap:5px;padding:9px 10px;background:#fff;border:1px solid #e5eaf0;border-radius:30px;box-shadow:0 8px 28px rgba(10,25,45,.2);animation:reactPop .16s ease-out}.reaction-picker button{font-size:25px;padding:4px 5px;min-width:36px;justify-content:center;border-radius:50%;transition:transform .12s}.reaction-picker button:active{transform:scale(1.3)}
 /* Mobile long-press reactions: prevent Android text-selection Copy toolbar on Vote. */
 .post-acts button[data-a="like"]{background:transparent!important;box-shadow:none!important;border:0!important;color:inherit;padding:7px 12px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:pan-y}.post-acts button[data-a="like"].liked{color:inherit}.post-reaction-emoji{font-size:23px;line-height:1;display:inline-block;transition:transform .15s}.post-acts button[data-a="like"].liked .post-reaction-emoji{transform:scale(1.08)}
-.reaction-picker,.reaction-picker *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+ .reaction-picker,.reaction-picker *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.post-follow{margin-left:auto!important;white-space:nowrap!important;border:1px solid #dce5ef!important;border-radius:18px!important;padding:6px 10px!important;background:#f5f8fc!important;color:#1763a6!important;font-size:12px!important;font-weight:700!important}.post-h .more{margin-left:6px!important}.post-acts button[data-a="linkPost"]{color:#1763a6!important}
 @keyframes reactPop{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 /* sub screens */
 .sh{position:relative;top:auto;z-index:1;background:var(--bg);display:flex;align-items:center;gap:10px;padding:14px 12px 10px}
@@ -1266,7 +1267,7 @@ function T(s) { return (P.lang === 'tp' && TP[s]) || s; }
 
 /* ---------- state ---------- */
 var S = { user: null, profile: null, posts: [], react: {}, ccount: {}, listings: [], saved: {}, jobs: [], applied: {}, stories: [], notices: [], services: [], businesses: [], products: [],
-  circles: [], ccounts: {}, mycircles: {}, talents: [], votes: {}, reports: [], msgs: [], cmsgs: {}, businessInbox: [], myBusinessEnquiries: [], loaded: false };
+  circles: [], ccounts: {}, mycircles: {}, talents: [], votes: {}, reports: [], msgs: [], cmsgs: {}, businessInbox: [], myBusinessEnquiries: [], following: {}, loaded: false };
 var ui = { mq: '', mcat: 'All', jq: '', jcat: 'All', jtab: 'find', bq: '', feed: 'png', auth: { tab: 'phone', step: 'enter', phone: '', mode: 'in' } };
 var stack = [{ n: 'home', p: {} }];
 var tmpFile = null, histOK = false, afterClose = false, pollT = null, booted = false;
@@ -1300,9 +1301,10 @@ async function loadFeed() {
   await loadLives();
   var r = await q(db.from('posts').select('*').order('created_at', { ascending: false }).limit(100));
   if (!r.data) return;
-  S.posts = r.data; S.react = {}; S.ccount = {};
+  S.posts = r.data; S.react = {}; S.ccount = {}; S.following = {};
   var ids = r.data.map(function (p) { return p.id; });
   if (!ids.length) return;
+  if (S.user) { var authors = Array.from(new Set(r.data.map(function (p) { return p.author; }).filter(function (id) { return id && id !== S.user.id; }))); if (authors.length) { var fr = await q(db.from('user_follows').select('followed_id').eq('follower_id', S.user.id).in('followed_id', authors)); (fr.data || []).forEach(function (x) { S.following[x.followed_id] = true; }); } }
   var a = await q(db.from('post_reactions').select('post_id,user_id,reaction').in('post_id', ids));
   (a.data || []).forEach(function (x) { var o = S.react[x.post_id] || (S.react[x.post_id] = { n: 0, mine: false, reaction: null, counts: {} }); o.n++; var k=x.reaction || 'like'; o.counts[k]=(o.counts[k]||0)+1; if (S.user && x.user_id === S.user.id) { o.mine=true; o.reaction=k; } });
   var c = await q(db.from('post_comments').select('post_id').in('post_id', ids));
@@ -1954,10 +1956,10 @@ function postHtml(p) {
   var myEmoji = r.reaction ? (reactionEmoji[r.reaction] || '😊') : '😊';
   var media = p.media_url && !P.saver ? (p.media_type === 'video' ? '<video class="media" src="' + esc(p.media_url) + '" controls playsinline preload="metadata"></video>' : '<img class="media" src="' + esc(p.media_url) + '" alt="" loading="lazy">') : '';
   var official = /^gov connect/i.test(p.author_name || '');
-  return '<div class="post' + (official ? ' official' : '') + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div><button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
+  return '<div class="post' + (official ? ' official' : '') + '" id="post-' + p.id + '" data-post="' + p.id + '"><div class="post-h">' + av(p.author_name, null, 42) + '<div><b>' + esc(p.author_name || 'Member') + (official ? '<span class="vt">✓</span>' : '') + '</b><small>' + esc(p.district || p.province || 'PNG') + ' • ' + ago(p.created_at) + '</small></div>' + (!own && p.author ? '<button class="post-follow" data-a="toggleFollow" data-id="' + p.author + '">' + (S.following[p.author] ? 'Following' : '+ Follow') + '</button>' : '') + '<button class="more" data-a="postMenu" data-id="' + p.id + '" aria-label="Options">' + IC.dots + '</button></div>'
     + (p.body || p.title ? '<p>' + esc(p.body || p.title) + '</p>' : '') + media
     + '<div class="post-stats"><span>🗳️ ' + r.n + ' votes</span><span>' + cc + ' comments</span></div>'
-    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" style="background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;outline:0!important;min-width:0!important;width:auto!important;height:auto!important;padding:7px 12px!important;color:inherit!important;appearance:none;-webkit-appearance:none" aria-label="Press and hold for reactions">' + '<span class="post-reaction-emoji" aria-hidden="true">' + myEmoji + '</span>' + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="sharePost" data-id="' + p.id + '">' + IC.share + T('Share') + '</button></div></div>';
+    + '<div class="post-acts"><button class="' + (r.mine ? 'liked' : '') + '" data-a="like" data-id="' + p.id + '" style="background:transparent!important;background-color:transparent!important;background-image:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;outline:0!important;min-width:0!important;width:auto!important;height:auto!important;padding:7px 12px!important;color:inherit!important;appearance:none;-webkit-appearance:none" aria-label="Press and hold for reactions">' + '<span class="post-reaction-emoji" aria-hidden="true">' + myEmoji + '</span>' + '</button><button data-a="comment" data-id="' + p.id + '">' + IC.chat + T('Comment') + '</button><button data-a="linkPost" data-id="' + p.id + '">🔗 Link</button></div></div>';
 }
 function feedPosts() {
   var pr = S.profile || {}, t = ui.feed;
@@ -2800,6 +2802,8 @@ like: async function (el) { await savePostReaction(el.dataset.id, 'like'); },
  reactChoice: async function (el) { var post=el.closest('[data-post]'); var picker=el.closest('.reaction-picker'); if(picker) picker.remove(); if(post) await savePostReaction(post.dataset.post, el.dataset.reaction); },
 comment: function (el) { commentsModal(el.dataset.id); },
 sharePost: function (el) { var p = by(S.posts, el.dataset.id); if (p) share('WANTOK PNG', (p.author_name || '') + ': ' + (p.body || p.title || '')); },
+ linkPost: function (el) { var url = location.href.split('#')[0] + '#post-' + encodeURIComponent(el.dataset.id); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(function () { toast('Post link copied'); }, function () { prompt('Copy this post link', url); }); else prompt('Copy this post link', url); },
+ toggleFollow: async function (el) { if (!S.user) { toast('Sign in to follow members.'); return; } var target = el.dataset.id; if (!target || target === S.user.id) return; var was = !!S.following[target]; el.disabled = true; var result = was ? await q(db.from('user_follows').delete().eq('follower_id', S.user.id).eq('followed_id', target)) : await q(db.from('user_follows').insert({ follower_id: S.user.id, followed_id: target })); el.disabled = false; if (result.error) { toast('Could not update Follow: ' + result.error.message); return; } if (was) delete S.following[target]; else S.following[target] = true; el.textContent = was ? '+ Follow' : 'Following'; toast(was ? 'You unfollowed this member' : 'You are now following this member'); },
 
 postMenu: function (el) { var p = by(S.posts, el.dataset.id); if (!p) return; var own = S.user && p.author === S.user.id; menuSheet([['sharePost', p.id, '↗ Share post'], ['copyPost', p.id, '📋 Copy text'], ['reportPost', p.id, '🚩 Report post']].concat(own ? [['delPost', p.id, '🗑 Delete post', true]] : [])); },
 copyPost: function (el) { var p = by(S.posts, el.dataset.id); closeModal(); if (p && navigator.clipboard) navigator.clipboard.writeText(p.body || p.title || '').then(function () { toast('Copied'); }, function () { toast('Copy not available'); }); else toast('Copy not available'); },
